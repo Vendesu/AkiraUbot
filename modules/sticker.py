@@ -110,14 +110,28 @@ def create_text_image(text):
             # Jika masih gagal, gunakan font built-in PIL
             fnt = ImageFont.load_default()
     
+    # Fungsi untuk menghitung ukuran teks
+    def get_text_dimensions(text, font):
+        bbox = d.textbbox((0, 0), text, font=font)
+        return bbox[2] - bbox[0], bbox[3] - bbox[1]
+    
     # Hitung ukuran teks
-    w, h = d.textsize(text, font=fnt)
+    w, h = get_text_dimensions(text, fnt)
+    
     # Jika teks terlalu panjang, kurangi ukuran font
     while w > 500 or h > 500:
-        fnt = fnt.font_variant(size=fnt.size - 1)
-        w, h = d.textsize(text, font=fnt)
+        if hasattr(fnt, 'path'):
+            fnt = ImageFont.truetype(fnt.path, fnt.size - 1)
+        else:
+            # Jika font tidak memiliki path, gunakan font default dengan ukuran yang lebih kecil
+            fnt = ImageFont.load_default()
+        w, h = get_text_dimensions(text, fnt)
     
-    d.text(((512-w)/2, (512-h)/2), text, font=fnt, fill='black')
+    # Hitung posisi untuk menempatkan teks di tengah
+    x = (512 - w) / 2
+    y = (512 - h) / 2
+    
+    d.text((x, y), text, font=fnt, fill='black')
     return img
 
 def add_commands(add_command):
