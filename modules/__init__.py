@@ -1,4 +1,4 @@
-from . import (
+from import (
     basic, utils, notes, admin, afk, translate, sticker, downloader, spam, info, speedtest, text, help, autotag, ping, status, wellcome, update, statistik, duck, asupan, invgrup
 )
 
