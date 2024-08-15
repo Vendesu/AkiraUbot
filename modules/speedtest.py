@@ -11,21 +11,23 @@ def load(client):
         animation = [
             "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
         ]
-        message = await event.edit("Memulai Speedtest...")
-        for i in range(3): 
+        message = await event.reply("Memulai Speedtest...")
+        for i in range(3):  # Animasi awal
             for frame in animation:
                 await message.edit(f"Memulai Speedtest {frame}")
                 await asyncio.sleep(0.2)
 
         await message.edit("Menjalankan speedtest...")
-        try:        
-            command = "speedtest -f json"
+        try:
+            # Menggunakan Ookla Speedtest CLI dengan output JSON
+            command = "speedtest --format=json --progress=no"
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-                        
+            
+            # Animasi selama proses berjalan
             while True:
                 if process.returncode is not None:
                     break
@@ -38,12 +40,13 @@ def load(client):
             if stderr:
                 await message.edit(f"Terjadi kesalahan: {stderr.decode('utf-8')}")
                 return
-                        
+            
+            # Parsing output JSON
             result_json = json.loads(stdout.decode('utf-8'))
             
             ping = result_json['ping']['latency']
-            download = result_json['download']['bandwidth'] * 8 / 1_000_000 
-            upload = result_json['upload']['bandwidth'] * 8 / 1_000_000 
+            download = result_json['download']['bandwidth'] * 8 / 1_000_000  # Convert to Mbps
+            upload = result_json['upload']['bandwidth'] * 8 / 1_000_000  # Convert to Mbps
             isp = result_json['isp']
             server = result_json['server']['name']
             
