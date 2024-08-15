@@ -1,7 +1,7 @@
 from telethon import events, errors
-from telethon.tl.functions.channels import EditTitleRequest, EditPhotoRequest, EditAboutRequest
-from telethon.tl.functions.messages import EditChatTitleRequest, EditChatAboutRequest
-from telethon.tl.types import InputChatUploadedPhoto
+from telethon.tl.functions.channels import EditTitleRequest, EditPhotoRequest
+from telethon.tl.functions.messages import EditChatTitleRequest
+from telethon.tl.types import InputChatUploadedPhoto, ChatPhotoEmpty
 from .utils import restricted_to_owner
 import io
 
@@ -16,7 +16,7 @@ def load(client):
                     photo = await client.download_media(replied_message.photo)
                     await client(EditPhotoRequest(
                         event.chat_id,
-                        await client.upload_file(photo)
+                        InputChatUploadedPhoto(await client.upload_file(photo))
                     ))
                     await event.reply("✅ Foto grup berhasil diubah.")
                 else:
@@ -44,10 +44,7 @@ def load(client):
     async def set_group_desc(event):
         new_desc = event.pattern_match.group(1)
         try:
-            if event.is_group:
-                await client(EditAboutRequest(event.chat_id, new_desc))
-            else:
-                await client(EditChatAboutRequest(event.chat_id, new_desc))
+            await client.edit_message(event.chat_id, message=new_desc, edit_hide=True)
             await event.reply(f"✅ Deskripsi grup berhasil diubah.")
         except Exception as e:
             await event.reply(f"❌ Terjadi kesalahan: {str(e)}")
@@ -83,8 +80,9 @@ def load(client):
             info += f"🆔 ID: `{group.id}`\n"
             info += f"📝 Judul: `{group.title}`\n"
             info += f"🔗 Username: {username}\n"
-            info += f"👥 Jumlah Anggota: {group.participants_count}\n"
-            if group.about:
+            if hasattr(group, 'participants_count'):
+                info += f"👥 Jumlah Anggota: {group.participants_count}\n"
+            if hasattr(group, 'about'):
                 info += f"ℹ️ Deskripsi: {group.about}\n"
             await event.reply(info)
         except Exception as e:
