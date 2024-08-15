@@ -56,13 +56,13 @@ main() {
     # Klon repositori
     pesan "Mengunduh repositori AkiraUBot..." "${BIRU}"
     git clone https://github.com/Vendesu/AkiraUbot.git
-    cd AkiraUBot
+    cd AkiraUbot
 
     # Buat sesi screen baru dan jalankan setup di dalamnya
     pesan "Memulai instalasi AkiraUBot dalam sesi screen..." "${UNGU}"
     screen -dmS AkiraUBot bash -c '
         echo -e "\033[0;36mMenginstal dependensi Python...\033[0m"
-        pip3 install -r requirements.txt
+        pip3 install telethon googletrans==3.1.0a0 pydub moviepy SpeechRecognition youtube_dl aiohttp beautifulsoup4 psutil GitPython Pillow emoji
         echo -e "\033[0;32mInstalasi dependensi selesai.\033[0m"
         echo -e "\033[0;35mMemulai AkiraUBot...\033[0m"
         python3 main.py
