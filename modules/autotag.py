@@ -1,0 +1,52 @@
+from telethon import events
+import json
+import os
+from .afk import check_afk_status
+from .utils import restricted_to_owner
+
+TAG_MESSAGE_FILE = 'tag_message.json'
+
+def load_tag_message():
+    if os.path.exists(TAG_MESSAGE_FILE):
+        with open(TAG_MESSAGE_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_tag_message(tag_message):
+    with open(TAG_MESSAGE_FILE, 'w') as f:
+        json.dump(tag_message, f)
+
+tag_message = load_tag_message()
+
+def load(client):
+    @client.on(events.NewMessage(pattern=r'\.settag (.+)'))
+    @restricted_to_owner
+    async def set_tag_message(event):
+        message = event.pattern_match.group(1)
+        user_id = str(event.sender_id)
+        tag_message[user_id] = message
+        save_tag_message(tag_message)
+        await event.edit(f"Pesan tag otomatis telah diatur: {message}")
+
+    @client.on(events.NewMessage(pattern=r'\.cleartag'))
+    @restricted_to_owner
+    async def clear_tag_message(event):
+        user_id = str(event.sender_id)
+        if user_id in tag_message:
+            del tag_message[user_id]
+            save_tag_message(tag_message)
+            await event.edit("Pesan tag otomatis telah dihapus.")
+        else:
+            await event.edit("Anda tidak memiliki pesan tag yang diatur.")
+
+    @client.on(events.NewMessage(incoming=True))
+    async def handle_tag(event):
+        if event.mentioned and not check_afk_status():
+            me = await event.client.get_me()
+            user_id = str(me.id)
+            if user_id in tag_message:
+                await event.reply(tag_message[user_id])
+
+def add_commands(add_command):
+    add_command('.settag <pesan>', 'Mengatur pesan otomatis saat di-tag (hanya admin)')
+    add_command('.cleartag', 'Menghapus pesan otomatis saat di-tag (hanya admin)')
