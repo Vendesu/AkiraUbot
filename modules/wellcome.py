@@ -37,7 +37,7 @@ def load(client: TelegramClient):
         )
         
         await asyncio.sleep(1)
-        await event.edit(welcome_text)
+        await event.reply(welcome_text)
         
         welcomed_users[str(event.sender_id)] = True
         with open(WELCOMED_USERS_FILE, 'w') as f:
@@ -53,12 +53,12 @@ def load(client: TelegramClient):
     async def set_welcome_message(event):       
         new_welcome = event.text.split(maxsplit=1)
         if len(new_welcome) < 2:
-            await event.edit("Silakan berikan pesan selamat datang baru setelah command.")
+            await event.reply("Silakan berikan pesan selamat datang baru setelah command.")
             return
         
         global welcome_text
         welcome_text = new_welcome[1]
-        await event.edit("Pesan selamat datang berhasil diperbarui.")
+        await event.reply("Pesan selamat datang berhasil diperbarui.")
 
     @client.on(events.NewMessage(pattern=r'\.clearwelcomed'))
     @restricted_to_owner
@@ -67,7 +67,7 @@ def load(client: TelegramClient):
         welcomed_users.clear()
         with open(WELCOMED_USERS_FILE, 'w') as f:
             json.dump(welcomed_users, f)
-        await event.edit("Daftar pengguna yang sudah menerima pesan selamat datang telah dihapus.")
+        await event.reply("Daftar pengguna yang sudah menerima pesan selamat datang telah dihapus.")
 
 def add_commands(add_command):
     add_command('.setwelcome', 'Mengatur pesan selamat datang baru')
