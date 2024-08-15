@@ -1,10 +1,10 @@
 from . import (
-    basic, utils, notes, admin, afk, translate, sticker, downloader, spam, info, speedtest, text, help, autotag, ping, status, wellcome, update, statistik, duck, asupan
+    basic, utils, notes, admin, afk, translate, sticker, downloader, spam, info, speedtest, text, help, autotag, ping, status, wellcome, update, statistik, duck, asupan, invgrup
 )
 
 def load_modules(client):
     modules_list = [
-        basic, utils, notes, admin, afk, translate, sticker, downloader, spam, info, speedtest, text, autotag, ping, status, wellcome, update, statistik, duck, asupan
+        basic, utils, notes, admin, afk, translate, sticker, downloader, spam, info, speedtest, text, autotag, ping, status, wellcome, update, statistik, duck, asupan, invgrup
     ]
     
     for module in modules_list:
