@@ -5,7 +5,9 @@ import sys
 import aiohttp
 import os
 from .utils import restricted_to_owner, get_readable_time
+from .update import get_version  # Impor fungsi get_version dari update.py
 
+# File untuk menyimpan waktu mulai bot
 START_TIME_FILE = "bot_start_time.txt"
 
 def save_start_time():
@@ -37,26 +39,35 @@ def load(client):
     @client.on(events.NewMessage(pattern=r'\.status'))
     @restricted_to_owner
     async def status(event):
+        # Edit pesan asli untuk menunjukkan bahwa status sedang diambil
         await event.edit("__Mengambil status...__")
         
         start_time = time.time()
         
+        # Dapatkan waktu uptime bot
         bot_uptime = get_bot_uptime()
         
+        # Dapatkan waktu uptime server
         boot_time = psutil.boot_time()
         server_uptime = get_readable_time(int(time.time() - boot_time))
-               
+        
+        # Dapatkan versi Python
         python_version = sys.version.split()[0]
-                
+        
+        # Dapatkan informasi ISP
         isp_info = await get_isp_info()
         
+        # Dapatkan versi bot
+        bot_version = get_version()
+        
         end_time = time.time()
-               
+        
+        # Hitung Round Trip Time (RTT)
         rtt = (end_time - start_time) * 1000
         
         status_message = "🤖 **System Status**\n\n"
         status_message += f"🚀 **Userbot Project:** AkiraUBot\n"
-        status_message += f"🔢 **Version:** 1.0\n"
+        status_message += f"🔢 **Version:** {bot_version}\n"
         status_message += f"🗣 **Bahasa:** Indonesia\n"
         status_message += f"⚡ **RTT:** {rtt:.2f}ms\n"
         status_message += f"🕒 **Bot uptime:** {bot_uptime}\n"
@@ -71,6 +82,7 @@ def load(client):
         status_message += "Bot ini 100% GRATIS. Jika ada yang menjual, "
         status_message += "silakan laporkan ke @akiraneverdie"
         
+        # Edit pesan asli dengan hasil status
         await event.edit(status_message)
 
 def add_commands(add_command):
