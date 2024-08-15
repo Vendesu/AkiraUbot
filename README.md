@@ -22,7 +22,7 @@ Jika Anda lebih suka instalasi manual, ikuti langkah-langkah berikut:
    ```
 3. Klon repositori AkiraUBot:
    ```
-   git clone https://github.com/yourusername/AkiraUBot.git
+   git clone https://github.com/Vendesu/AkiraUbot.git
    ```
 4. Masuk ke direktori AkiraUBot:
    ```
