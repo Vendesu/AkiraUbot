@@ -3,7 +3,7 @@ from functools import wraps
 import time
 import math
 
-owner_id = None
+owner_id = None  # Ini akan diset saat userbot pertama kali dijalankan
 
 def set_owner_id(id):
     global owner_id
@@ -18,9 +18,11 @@ def restricted_to_owner(func):
             owner_id = me.id
         
         sender = await event.get_sender()
-        if sender.id == owner_id:
+        if sender and sender.id == owner_id:
             return await func(event)
-        else:            
+        else:
+            # Opsional: Balas dengan pesan jika bukan pemilik yang mencoba menggunakan perintah
+            # await event.reply("Maaf, perintah ini hanya dapat digunakan oleh pemilik userbot.")
             return
     return wrapper
 
@@ -100,8 +102,10 @@ def progress(current, total, message, start_time, client, chat_id, message_id):
               )
         client.edit_message(chat_id, message_id, tmp + message)
 
-def load(client):    
+def load(client):
+    # Tidak ada yang perlu dimuat untuk modul utilitas
     pass
 
 def add_commands(add_command):
+    # Tidak ada perintah yang perlu ditambahkan untuk modul utilitas
     pass
