@@ -20,7 +20,7 @@ def load(client):
         await message.edit("Menjalankan speedtest...")
         try:
             # Menggunakan Ookla Speedtest CLI dengan output JSON
-            command = "speedtest --format=json --progress=no"
+            command = "speedtest --json"
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=asyncio.subprocess.PIPE,
@@ -44,13 +44,13 @@ def load(client):
             # Parsing output JSON
             result_json = json.loads(stdout.decode('utf-8'))
             
-            ping = result_json['ping']['latency']
-            download = result_json['download']['bandwidth'] * 8 / 1_000_000  # Convert to Mbps
-            upload = result_json['upload']['bandwidth'] * 8 / 1_000_000  # Convert to Mbps
-            isp = result_json['isp']
-            server = result_json['server']['name']
+            ping = result_json['ping']
+            download = result_json['download'] / 1_000_000  # Convert to Mbps
+            upload = result_json['upload'] / 1_000_000  # Convert to Mbps
+            isp = result_json['client']['isp']
+            server = result_json['server']['sponsor']
             
-            result = "**Speedtest Results**\n\n"
+            result = "**Hasil Speedtest**\n\n"
             result += f"**ISP:** `{isp}`\n"
             result += f"**Server:** `{server}`\n"
             result += f"**Ping:** `{ping:.2f}` ms\n"
