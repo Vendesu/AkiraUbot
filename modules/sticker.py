@@ -100,12 +100,23 @@ def create_text_image(text):
     d = ImageDraw.Draw(img)
     
     try:
+        # Coba gunakan font default
         fnt = ImageFont.load_default()
     except:
-        # Jika gagal, coba gunakan font DejaVu Sans
-        fnt = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40)
+        try:
+            # Jika gagal, coba gunakan font DejaVu Sans
+            fnt = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40)
+        except:
+            # Jika masih gagal, gunakan font built-in PIL
+            fnt = ImageFont.load_default()
     
+    # Hitung ukuran teks
     w, h = d.textsize(text, font=fnt)
+    # Jika teks terlalu panjang, kurangi ukuran font
+    while w > 500 or h > 500:
+        fnt = fnt.font_variant(size=fnt.size - 1)
+        w, h = d.textsize(text, font=fnt)
+    
     d.text(((512-w)/2, (512-h)/2), text, font=fnt, fill='black')
     return img
 
