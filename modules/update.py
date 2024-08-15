@@ -7,8 +7,9 @@ from git import Repo
 from git.exc import GitCommandError
 from .utils import restricted_to_owner
 
-REPO_URL = "https://github.com/Vendesu/AkiraUbot.git"
-
+# URL repositori GitHub AkiraUBot
+REPO_URL = "https://github.com/Vendesu/AkiraUBot.git"
+# Direktori tempat bot diinstal
 BOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 def load(client):
@@ -20,20 +21,24 @@ def load(client):
             repo = Repo(BOT_DIR)
             current_commit = repo.head.commit
             repo.remotes.origin.fetch()
-                        
+            
+            # Cek apakah ada pembaruan
             if current_commit == repo.remotes.origin.refs.main.commit:
                 await event.edit("✅ Bot sudah dalam versi terbaru.")
                 return
-                        
+            
+            # Ada pembaruan, lakukan pull
             await event.edit("🔄 Memperbarui bot...")
             repo.git.reset('--hard')
             repo.remotes.origin.pull()
             
+            # Instal dependensi baru jika ada
             await event.edit("🔄 Menginstal dependensi...")
-            os.system('pip install -r requirements.txt')
+            os.system('pip install telethon googletrans==3.1.0a0 pydub moviepy SpeechRecognition youtube_dl aiohttp beautifulsoup4 psutil GitPython Pillow emoji python-dotenv speedtest-cli')
             
             await event.edit("✅ Bot berhasil diperbarui! Merestart...")
             
+            # Restart bot
             await client.disconnect()
             os.execl(sys.executable, sys.executable, *sys.argv)
         
@@ -50,7 +55,8 @@ def load(client):
             repo = Repo(BOT_DIR)
             current_commit = repo.head.commit
             repo.remotes.origin.fetch()
-                        
+            
+            # Ambil commit antara versi saat ini dan versi terbaru
             commits = list(repo.iter_commits(f'{current_commit}..origin/main'))
             
             if not commits:
