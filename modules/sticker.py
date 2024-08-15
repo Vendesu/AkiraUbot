@@ -2,7 +2,7 @@ from telethon import events
 import io
 import math
 import urllib.request
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from telethon.tl.types import DocumentAttributeFilename
 
 def load(client):
@@ -12,7 +12,7 @@ def load(client):
             reply_message = await event.get_reply_message()
             if reply_message.sticker:
                 if reply_message.sticker.mime_type == "application/x-tgsticker":
-                    await event.edit("❌ Maaf, stiker animasi belum didukung.")
+                    await event.reply("❌ Maaf, stiker animasi belum didukung.")
                     return
                 sticker_image = io.BytesIO()
                 await client.download_media(reply_message.sticker, sticker_image)
@@ -24,9 +24,9 @@ def load(client):
                 png_image.seek(0)
                 await client.send_file(event.chat_id, png_image, force_document=True, reply_to=reply_message.id)
             else:
-                await event.edit("🔔 Mohon balas ke sebuah stiker.")
+                await event.reply("🔔 Mohon balas ke sebuah stiker.")
         else:
-            await event.edit("🔔 Mohon balas ke sebuah stiker.")
+            await event.reply("🔔 Mohon balas ke sebuah stiker.")
 
     @client.on(events.NewMessage(pattern=r'\.stkr'))
     async def image_to_sticker(event):
@@ -44,9 +44,9 @@ def load(client):
                 sticker_image.seek(0)
                 await client.send_file(event.chat_id, sticker_image, force_document=False, reply_to=reply_message.id)
             else:
-                await event.edit("🔔 Mohon balas ke sebuah gambar.")
+                await event.reply("🔔 Mohon balas ke sebuah gambar.")
         else:
-            await event.edit("🔔 Mohon balas ke sebuah gambar.")
+            await event.reply("🔔 Mohon balas ke sebuah gambar.")
 
     @client.on(events.NewMessage(pattern=r'\.stkrurl (.+)'))
     async def url_to_sticker(event):
@@ -62,7 +62,7 @@ def load(client):
             sticker_image.seek(0)
             await client.send_file(event.chat_id, sticker_image, force_document=False)
         except Exception as e:
-            await event.edit(f"❌ Terjadi kesalahan: {str(e)}")
+            await event.reply(f"❌ Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.stkrtext (.+)'))
     async def text_to_sticker(event):
@@ -96,10 +96,15 @@ def resize_image(img):
     return img
 
 def create_text_image(text):
-    from PIL import Image, ImageDraw, ImageFont
     img = Image.new('RGB', (512, 512), color='white')
     d = ImageDraw.Draw(img)
-    fnt = ImageFont.truetype("arial.ttf", 40)
+    
+    try:
+        fnt = ImageFont.load_default()
+    except:
+        # Jika gagal, coba gunakan font DejaVu Sans
+        fnt = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40)
+    
     w, h = d.textsize(text, font=fnt)
     d.text(((512-w)/2, (512-h)/2), text, font=fnt, fill='black')
     return img
