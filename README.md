@@ -7,7 +7,7 @@ AkiraUBot adalah userbot Telegram yang membantu mengotomatisasi dan meningkatkan
 Untuk menginstal AkiraUBot secara otomatis, jalankan perintah berikut di terminal:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/yourusername/AkiraUBot/main/akira.sh)
+bash <(curl -s https://raw.githubusercontent.com/Vendesu/AkiraUBot/main/akira.sh)
 ```
 
 ## 📖 Instalasi Manual
