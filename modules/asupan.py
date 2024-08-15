@@ -19,7 +19,7 @@ def load(client):
     @client.on(events.NewMessage(pattern=r'\.asupan'))
     @restricted_to_owner
     async def asupan(event):
-        xx = await event.reply("Tunggu Sebentar...")
+        xx = await event.edit("Tunggu Sebentar...")
         try:
             asupan_msg = await get_random_media(client, "@tedeasupancache", InputMessagesFilterVideo)
             if asupan_msg:
@@ -38,9 +38,9 @@ def load(client):
     @restricted_to_owner
     async def desahcewe(event):
         if event.chat_id in BLACKLIST_CHAT:
-            return await event.reply("Perintah ini Dilarang digunakan di Group ini")
+            return await event.edit("Perintah ini Dilarang digunakan di Group ini")
         
-        xx = await event.reply("Tunggu Sebentar...")
+        xx = await event.edit("Tunggu Sebentar...")
         try:
             desah_msg = await get_random_media(client, "@desahancewesangesange", InputMessagesFilterVoice)
             if desah_msg:
@@ -59,9 +59,9 @@ def load(client):
     @restricted_to_owner
     async def desahcowo(event):
         if event.chat_id in BLACKLIST_CHAT:
-            return await event.reply("Perintah ini Dilarang digunakan di Group ini")
+            return await event.edit("Perintah ini Dilarang digunakan di Group ini")
         
-        xx = await event.reply("Tunggu Sebentar...")
+        xx = await event.edit("Tunggu Sebentar...")
         try:
             desah_msg = await get_random_media(client, "@desahancowokkkk", InputMessagesFilterVoice)
             if desah_msg:
