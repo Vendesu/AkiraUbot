@@ -107,7 +107,7 @@ def load(client):
     @restricted_to_owner
     async def get_bot_version(event):
         version = get_version()
-        await event.reply(f"🤖 Versi AkiraUBot saat ini: {version}")
+        await event.edit(f"🤖 Versi AkiraUBot saat ini: {version}")
 
     @client.on(events.NewMessage(pattern=r'\.changelog'))
     @restricted_to_owner
