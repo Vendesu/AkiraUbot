@@ -14,7 +14,7 @@ def cek_versi():
         with open(FILE_VERSI, 'r') as berkas:
             return berkas.read().strip()
     except FileNotFoundError:
-        return "Hmm, versinya hilang. Mungkin masih beta?"
+        return "Versi tidak diketahui"
 
 def format_durasi(detik):
     menit, detik = divmod(detik, 60)
@@ -51,15 +51,15 @@ def load(client):
         penggunaan_disk = psutil.disk_usage('/').percent
 
         pesan_status = "🤖 **Hai! Ini Status AkiraUBot**\n\n"
-        pesan_status += f"🚀 **Proyek:** AkiraUBot (bot keren untuk Telegram!)\n"
-        pesan_status += f"🔢 **Versi:** {versi_bot} (makin tinggi makin canggih)\n"
-        pesan_status += f"🗣 **Bahasa:** Indonesia (pastinya!)\n"
+        pesan_status += f"🚀 **Proyek:** AkiraUBot\n"
+        pesan_status += f"🔢 **Versi:** {versi_bot}\n"
+        pesan_status += f"🗣 **Bahasa:** Indonesia\n"
         pesan_status += f"💻 **Komputer sudah menyala selama:** {umur_komputer}\n"
-        pesan_status += f"🐍 **Versi Python:** {versi_python} (ular yang pinter!)\n"
+        pesan_status += f"🐍 **Versi Python:** {versi_python}\n"
         pesan_status += f"📡 **Versi Telethon:** {telethon_version}\n\n"
-        pesan_status += f"🖥️ **CPU lagi kerja:** {penggunaan_cpu}% (semangat CPU!)\n"
-        pesan_status += f"🧠 **RAM terpakai:** {penggunaan_ram}% (masih kuat nih)\n"
-        pesan_status += f"💽 **Disk penuh:** {penggunaan_disk}% (masih muat banyak!)\n\n"
+        pesan_status += f"🖥️ **CPU lagi kerja:** {penggunaan_cpu}%\n"
+        pesan_status += f"🧠 **RAM terpakai:** {penggunaan_ram}%\n"
+        pesan_status += f"💽 **Disk penuh:** {penggunaan_disk}%\n\n"
         pesan_status += f"👨‍💻 **Dibuat dengan ❤️ oleh:** Pop Ice Taro\n"
         pesan_status += f"💬 **Mau ngobrol sama yang bikin?** @akiraneverdie\n"
         pesan_status += f"🚀 **Gabung grup pendukung:** @akiratunnel\n"
