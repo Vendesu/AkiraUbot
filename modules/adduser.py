@@ -41,31 +41,37 @@ async def verifikasi_2fa(client, kata_sandi):
 async def interactive_add_user(event, client):
     async def get_response(prompt):
         await event.reply(prompt)
-        try:
-            response = await client.wait_for_event(events.NewMessage(from_users=event.sender_id, chats=event.chat_id), timeout=300)
-            return response.message.text
-        except asyncio.TimeoutError:
-            await event.reply("Waktu habis. Silakan mulai lagi dengan .adduser")
-            return None
+        response = await client.get_messages(event.chat_id, limit=1)
+        if response and response[0].text:
+            return response[0].text
+        return None
 
     try:
         await event.reply("Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
         
         api_id = await get_response("Langkah 1/4: Masukkan API ID:")
-        if not api_id: return
+        if not api_id:
+            await event.reply("API ID tidak valid. Proses dibatalkan.")
+            return
         
         api_hash = await get_response("Langkah 2/4: Masukkan API Hash:")
-        if not api_hash: return
+        if not api_hash:
+            await event.reply("API Hash tidak valid. Proses dibatalkan.")
+            return
         
         telepon = await get_response("Langkah 3/4: Masukkan nomor telepon (format: +62xxxxxxxxxx):")
-        if not telepon: return
+        if not telepon:
+            await event.reply("Nomor telepon tidak valid. Proses dibatalkan.")
+            return
 
         await event.reply("Memproses... Mengirim kode OTP.")
         new_client, result = await tambah_pengguna(api_id, api_hash, telepon)
 
         if result == "OTP_NEEDED":
             otp = await get_response("Langkah 4/4: Masukkan kode OTP yang telah dikirim ke nomor Anda:")
-            if not otp: return
+            if not otp:
+                await event.reply("OTP tidak valid. Proses dibatalkan.")
+                return
 
             string_sesi, error = await verifikasi_otp(new_client, telepon, otp)
             if error:
@@ -73,7 +79,9 @@ async def interactive_add_user(event, client):
                 return
             elif string_sesi == "2FA_NEEDED":
                 pwd = await get_response("Akun ini menggunakan 2FA. Masukkan kata sandi 2FA:")
-                if not pwd: return
+                if not pwd:
+                    await event.reply("Kata sandi 2FA tidak valid. Proses dibatalkan.")
+                    return
 
                 string_sesi, error = await verifikasi_2fa(new_client, pwd)
                 if error:
