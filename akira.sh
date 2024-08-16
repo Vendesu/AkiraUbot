@@ -62,14 +62,23 @@ main() {
     pesan "Memulai instalasi AkiraUBot dalam sesi screen..." "${UNGU}"
     screen -dmS AkiraUBot bash -c '
         echo -e "\033[0;36mMenginstal dependensi Python...\033[0m"
-        if [ -f "requirements.txt" ]; then
-            pip3 install -r requirements.txt
-            echo -e "\033[0;32mInstalasi dependensi selesai.\033[0m"
-        else
-            echo -e "\033[0;31mFile requirements.txt tidak ditemukan. Menginstal dependensi default...\033[0m"
-            pip3 install telethon pillow googletrans==3.1.0a0 pydub moviepy SpeechRecognition youtube_dl aiohttp beautifulsoup4 psutil GitPython emoji python-dotenv speedtest-cli
-            echo -e "\033[0;32mInstalasi dependensi default selesai.\033[0m"
-        fi
+        pip3 install --upgrade pip
+        pip3 install telethon
+        pip3 install pillow
+        pip3 install googletrans==3.1.0a0
+        pip3 install pydub
+        pip3 install moviepy
+        pip3 install SpeechRecognition
+        pip3 install youtube_dl
+        pip3 install aiohttp
+        pip3 install beautifulsoup4
+        pip3 install psutil
+        pip3 install GitPython
+        pip3 install emoji
+        pip3 install python-dotenv
+        pip3 install speedtest-cli
+        # Tambahkan modul lain yang mungkin dibutuhkan di sini
+        echo -e "\033[0;32mInstalasi dependensi selesai.\033[0m"
         echo -e "\033[0;35mMemulai AkiraUBot...\033[0m"
         python3 main.py
         exec bash
