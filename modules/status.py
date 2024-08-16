@@ -3,25 +3,11 @@ import time
 import psutil
 import sys
 import os
-from .utils import restricted_to_owner, get_readable_time
+from .utils import restricted_to_owner
 
-WAKTU_MULAI_BOT = "waktu_mulai_bot.txt"
-
-FILE_VERSI = os.path.join(os.path.dirname(__file__), '..', 'versi.txt')
+FILE_VERSI = os.path.join(os.path.dirname(__file__), '..', 'version.txt')
 
 LINK_GITHUB = "https://github.com/Vendesu/AkiraUBot"
-
-def simpan_waktu_mulai():
-    with open(WAKTU_MULAI_BOT, "w") as berkas:
-        berkas.write(str(time.time()))
-
-def hitung_umur_bot():
-    try:
-        with open(WAKTU_MULAI_BOT, "r") as berkas:
-            waktu_mulai = float(berkas.read())
-        return get_readable_time(int(time.time() - waktu_mulai))
-    except:
-        return "Waduh, nggak tau nih. Kayaknya lupa nyatet."
 
 def cek_versi():
     try:
@@ -30,17 +16,33 @@ def cek_versi():
     except FileNotFoundError:
         return "Hmm, versinya hilang. Mungkin masih beta?"
 
+def format_durasi(detik):
+    menit, detik = divmod(detik, 60)
+    jam, menit = divmod(menit, 60)
+    hari, jam = divmod(jam, 24)
+    
+    hasil = []
+    if hari > 0:
+        hasil.append(f"{hari} hari")
+    if jam > 0:
+        hasil.append(f"{jam} jam")
+    if menit > 0:
+        hasil.append(f"{menit} menit")
+    if detik > 0:
+        hasil.append(f"{detik} detik")
+    
+    return ", ".join(hasil)
+
 def hitung_umur_komputer():
     waktu_nyala = psutil.boot_time()
-    lama_hidup = time.time() - waktu_nyala
-    return get_readable_time(int(lama_hidup))
+    lama_hidup = int(time.time() - waktu_nyala)
+    return format_durasi(lama_hidup)
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.status'))
     @restricted_to_owner
     async def tampilkan_status(event):
         versi_bot = cek_versi()
-        umur_bot = hitung_umur_bot()
         umur_komputer = hitung_umur_komputer()
         versi_python = sys.version.split()[0]
 
@@ -52,7 +54,6 @@ def load(client):
         pesan_status += f"🚀 **Proyek:** AkiraUBot (bot keren untuk Telegram!)\n"
         pesan_status += f"🔢 **Versi:** {versi_bot} (makin tinggi makin canggih)\n"
         pesan_status += f"🗣 **Bahasa:** Indonesia (pastinya!)\n"
-        pesan_status += f"🕒 **Bot sudah hidup selama:** {umur_bot}\n"
         pesan_status += f"💻 **Komputer sudah menyala selama:** {umur_komputer}\n"
         pesan_status += f"🐍 **Versi Python:** {versi_python} (ular yang pinter!)\n"
         pesan_status += f"📡 **Versi Telethon:** {telethon_version}\n\n"
