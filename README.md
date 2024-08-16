@@ -1,5 +1,7 @@
 # 🤖 AkiraUBot
 
+![AkiraUBot Logo](akira_logo.png)
+
 AkiraUBot adalah userbot Telegram yang membantu mengotomatisasi dan meningkatkan pengalaman penggunaan Telegram Anda.
 
 ## 🚀 Instalasi Cepat
@@ -63,7 +65,7 @@ Pastikan sistem Anda sudah diperbarui sebelum instalasi.
 
 ## 🤝 Berkontribusi
 
-Jika Anda menemukan masalah atau ingin menyarankan fitur baru, silakan buka issue di [halaman issues](https://github.com/yourusername/AkiraUBot/issues).
+Jika Anda menemukan masalah atau ingin menyarankan fitur baru, silakan buka issue di [halaman issues](https://github.com/Vendesu/AkiraUBot/issues).
 
 ## 📄 Lisensi
 
