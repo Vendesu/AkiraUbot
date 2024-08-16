@@ -5,59 +5,69 @@ import sys
 import os
 from .utils import restricted_to_owner, get_readable_time
 
-# File untuk menyimpan waktu mulai bot
-START_TIME_FILE = "bot_start_time.txt"
-# File untuk menyimpan versi
-VERSION_FILE = os.path.join(os.path.dirname(__file__), '..', 'version.txt')
+WAKTU_MULAI_BOT = "waktu_mulai_bot.txt"
 
-def save_start_time():
-    with open(START_TIME_FILE, "w") as f:
-        f.write(str(time.time()))
+FILE_VERSI = os.path.join(os.path.dirname(__file__), '..', 'versi.txt')
 
-def get_bot_uptime():
+LINK_GITHUB = "https://github.com/Vendesu/AkiraUBot"
+
+def simpan_waktu_mulai():
+    with open(WAKTU_MULAI_BOT, "w") as berkas:
+        berkas.write(str(time.time()))
+
+def hitung_umur_bot():
     try:
-        with open(START_TIME_FILE, "r") as f:
-            start_time = float(f.read())
-        return get_readable_time(int(time.time() - start_time))
+        with open(WAKTU_MULAI_BOT, "r") as berkas:
+            waktu_mulai = float(berkas.read())
+        return get_readable_time(int(time.time() - waktu_mulai))
     except:
-        return "Tidak tersedia"
+        return "Waduh, nggak tau nih. Kayaknya lupa nyatet."
 
-def get_version():
+def cek_versi():
     try:
-        with open(VERSION_FILE, 'r') as f:
-            return f.read().strip()
+        with open(FILE_VERSI, 'r') as berkas:
+            return berkas.read().strip()
     except FileNotFoundError:
-        return "Versi tidak diketahui"
+        return "Hmm, versinya hilang. Mungkin masih beta?"
 
-def get_server_uptime():
-    boot_time = psutil.boot_time()
-    uptime = time.time() - boot_time
-    return get_readable_time(int(uptime))
+def hitung_umur_komputer():
+    waktu_nyala = psutil.boot_time()
+    lama_hidup = time.time() - waktu_nyala
+    return get_readable_time(int(lama_hidup))
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.status'))
     @restricted_to_owner
-    async def status(event):
-        version = get_version()
-        bot_uptime = get_bot_uptime()
-        server_uptime = get_server_uptime()
-        python_version = sys.version.split()[0]
+    async def tampilkan_status(event):
+        versi_bot = cek_versi()
+        umur_bot = hitung_umur_bot()
+        umur_komputer = hitung_umur_komputer()
+        versi_python = sys.version.split()[0]
 
-        cpu_usage = psutil.cpu_percent()
-        ram_usage = psutil.virtual_memory().percent
-        disk_usage = psutil.disk_usage('/').percent
+        penggunaan_cpu = psutil.cpu_percent()
+        penggunaan_ram = psutil.virtual_memory().percent
+        penggunaan_disk = psutil.disk_usage('/').percent
 
-        status_message = "🤖 **Status AkiraUBot**\n\n"
-        status_message += f"🔢 **Versi Bot:** {version}\n"
-        status_message += f"🕒 **Uptime Bot:** {bot_uptime}\n"
-        status_message += f"💻 **Uptime Server:** {server_uptime}\n"
-        status_message += f"🐍 **Versi Python:** {python_version}\n"
-        status_message += f"📡 **Versi Telethon:** {telethon_version}\n\n"
-        status_message += f"🖥️ **Penggunaan CPU:** {cpu_usage}%\n"
-        status_message += f"🧠 **Penggunaan RAM:** {ram_usage}%\n"
-        status_message += f"💽 **Penggunaan Disk:** {disk_usage}%\n"
+        pesan_status = "🤖 **Hai! Ini Status AkiraUBot**\n\n"
+        pesan_status += f"🚀 **Proyek:** AkiraUBot (bot keren untuk Telegram!)\n"
+        pesan_status += f"🔢 **Versi:** {versi_bot} (makin tinggi makin canggih)\n"
+        pesan_status += f"🗣 **Bahasa:** Indonesia (pastinya!)\n"
+        pesan_status += f"🕒 **Bot sudah hidup selama:** {umur_bot}\n"
+        pesan_status += f"💻 **Komputer sudah menyala selama:** {umur_komputer}\n"
+        pesan_status += f"🐍 **Versi Python:** {versi_python} (ular yang pinter!)\n"
+        pesan_status += f"📡 **Versi Telethon:** {telethon_version}\n\n"
+        pesan_status += f"🖥️ **CPU lagi kerja:** {penggunaan_cpu}% (semangat CPU!)\n"
+        pesan_status += f"🧠 **RAM terpakai:** {penggunaan_ram}% (masih kuat nih)\n"
+        pesan_status += f"💽 **Disk penuh:** {penggunaan_disk}% (masih muat banyak!)\n\n"
+        pesan_status += f"👨‍💻 **Dibuat dengan ❤️ oleh:** Pop Ice Taro\n"
+        pesan_status += f"💬 **Mau ngobrol sama yang bikin?** @akiraneverdie\n"
+        pesan_status += f"🚀 **Gabung grup pendukung:** @akiratunnel\n"
+        pesan_status += f"📦 **Cek kode sumbernya di:** [GitHub AkiraUBot]({LINK_GITHUB})\n\n"
+        pesan_status += "⚠️ **INGAT YA:**\n"
+        pesan_status += "Bot ini GRATIS selamanya. Kalo ada yang jual, "
+        pesan_status += "langsung laporin aja ke @akiraneverdie. Jangan mau ditipu!"
 
-        await event.reply(status_message)
+        await event.reply(pesan_status)
 
 def add_commands(add_command):
-    add_command('.status', '📊 Menampilkan status bot termasuk versi, uptime, dan penggunaan sistem')
+    add_command('.status', '📊 Cek kondisi bot, lagi sehat atau nggak')
