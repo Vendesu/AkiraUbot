@@ -42,8 +42,11 @@ async def verifikasi_2fa(client, kata_sandi):
 async def interactive_add_user(event, client):
     async def get_response(prompt):
         await event.reply(prompt)
-        response = await client.wait_event(events.NewMessage(from_users=event.sender_id, chats=event.chat_id))
-        return response.message.text
+        try:
+            response = await client.get_messages(event.chat_id, limit=1)
+            return response[0].message
+        except:
+            return None
 
     try:
         await event.reply("Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
@@ -52,11 +55,19 @@ async def interactive_add_user(event, client):
         api_hash = await get_response("Langkah 2/4: Masukkan API Hash:")
         telepon = await get_response("Langkah 3/4: Masukkan nomor telepon (format: +62xxxxxxxxxx):")
 
+        if not all([api_id, api_hash, telepon]):
+            await event.reply("Proses dibatalkan karena input tidak lengkap.")
+            return
+
         await event.reply("Memproses... Mengirim kode OTP.")
         new_client, result = await tambah_pengguna(api_id, api_hash, telepon)
 
         if result == "OTP_NEEDED":
             otp = await get_response("Langkah 4/4: Masukkan kode OTP yang telah dikirim ke nomor Anda:")
+
+            if not otp:
+                await event.reply("Proses dibatalkan karena OTP tidak dimasukkan.")
+                return
 
             string_sesi, error = await verifikasi_otp(new_client, telepon, otp)
             if error:
@@ -64,6 +75,10 @@ async def interactive_add_user(event, client):
                 return
             elif string_sesi == "2FA_NEEDED":
                 pwd = await get_response("Akun ini menggunakan 2FA. Masukkan kata sandi 2FA:")
+
+                if not pwd:
+                    await event.reply("Proses dibatalkan karena kata sandi 2FA tidak dimasukkan.")
+                    return
 
                 string_sesi, error = await verifikasi_2fa(new_client, pwd)
                 if error:
@@ -93,8 +108,6 @@ async def interactive_add_user(event, client):
             client.config = config
 
         await event.reply("Akun baru berhasil ditambahkan!")
-    except asyncio.TimeoutError:
-        await event.reply("Waktu habis. Silakan coba lagi dengan mengetik .adduser")
     except Exception as e:
         await event.reply(f"Terjadi kesalahan: {str(e)}")
 
