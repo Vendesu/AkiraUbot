@@ -10,3 +10,4 @@ psutil
 GitPython
 Pillow
 emoji
+bs4
