@@ -34,7 +34,6 @@ instal_jika_belum_ada() {
     if ! command -v $1 &> /dev/null
     then
         pesan "Menginstal $1..." "${KUNING}"
-        sudo apt-get update
         sudo apt-get install -y $1
         pesan "$1 berhasil diinstal." "${HIJAU}"
     else
@@ -46,12 +45,27 @@ instal_jika_belum_ada() {
 main() {
     tampilkan_banner
 
+    # Update dan upgrade sistem
+    pesan "Memperbarui sistem..." "${BIRU}"
+    sudo apt-get update
+    sudo apt-get upgrade -y
+
     # Instal paket yang diperlukan
     pesan "Memeriksa dan menginstal paket yang diperlukan..." "${BIRU}"
     instal_jika_belum_ada screen
     instal_jika_belum_ada git
     instal_jika_belum_ada python3
     instal_jika_belum_ada python3-pip
+
+    # Pastikan Python3 terinstal
+    if ! command -v python3 &> /dev/null
+    then
+        pesan "Python3 tidak ditemukan. Menginstal Python3..." "${KUNING}"
+        sudo apt-get install -y python3
+        pesan "Python3 berhasil diinstal." "${HIJAU}"
+    else
+        pesan "Python3 sudah terinstal." "${HIJAU}"
+    fi
 
     # Klon repositori
     pesan "Mengunduh repositori AkiraUBot..." "${BIRU}"
