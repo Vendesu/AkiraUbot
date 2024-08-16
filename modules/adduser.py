@@ -43,7 +43,8 @@ def load(client):
     @client.on(events.NewMessage(pattern=r'\.adduser'))
     async def handle_adduser(event):
         sender = await event.get_sender()
-        if sender.id != client.uid:
+        me = await client.get_me()
+        if sender.id != me.id:
             return  # Hanya pemilik bot yang bisa menggunakan perintah ini
 
         chat = await event.get_chat()
