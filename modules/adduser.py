@@ -42,32 +42,33 @@ async def verifikasi_2fa(client, kata_sandi):
 async def interactive_add_user(event, client):
     async def get_response(prompt):
         await event.reply(prompt)
-        response = await client.get_messages(event.chat_id, limit=1)
-        return response[0].message
+        response = await client.wait_event(events.NewMessage(from_users=event.sender_id, chats=event.chat_id))
+        return response.message.text
 
     try:
-        api_id = await get_response("Silakan masukkan API ID:")
-        api_hash = await get_response("Silakan masukkan API Hash:")
-        telepon = await get_response("Silakan masukkan nomor telepon (format: +62xxxxxxxxxx):")
+        await event.reply("Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
+        
+        api_id = await get_response("Langkah 1/4: Masukkan API ID:")
+        api_hash = await get_response("Langkah 2/4: Masukkan API Hash:")
+        telepon = await get_response("Langkah 3/4: Masukkan nomor telepon (format: +62xxxxxxxxxx):")
 
-        await event.reply("Memproses...")
+        await event.reply("Memproses... Mengirim kode OTP.")
         new_client, result = await tambah_pengguna(api_id, api_hash, telepon)
 
         if result == "OTP_NEEDED":
-            otp = await get_response("Kode OTP telah dikirim. Silakan masukkan kode OTP:")
+            otp = await get_response("Langkah 4/4: Masukkan kode OTP yang telah dikirim ke nomor Anda:")
 
             string_sesi, error = await verifikasi_otp(new_client, telepon, otp)
             if error:
                 await event.reply(f"Error: {error}")
                 return
             elif string_sesi == "2FA_NEEDED":
-                pwd = await get_response("Akun ini menggunakan 2FA. Silakan masukkan kata sandi 2FA:")
+                pwd = await get_response("Akun ini menggunakan 2FA. Masukkan kata sandi 2FA:")
 
                 string_sesi, error = await verifikasi_2fa(new_client, pwd)
                 if error:
                     await event.reply(f"Error: {error}")
                     return
-
         elif isinstance(result, str) and result.startswith("Error"):
             await event.reply(f"Terjadi kesalahan: {result}")
             return
@@ -75,7 +76,7 @@ async def interactive_add_user(event, client):
             string_sesi = result
 
         # Simpan konfigurasi baru
-        config = client.config  # Asumsikan client memiliki atribut config
+        config = getattr(client, 'config', [])  # Gunakan list kosong jika tidak ada atribut config
         new_config = {
             "api_id": api_id,
             "api_hash": api_hash,
@@ -83,9 +84,17 @@ async def interactive_add_user(event, client):
             "string_sesi": string_sesi
         }
         config.append(new_config)
-        client.save_config(config)  # Asumsikan client memiliki metode save_config
+        
+        # Cek apakah client memiliki metode save_config
+        if hasattr(client, 'save_config') and callable(client.save_config):
+            client.save_config(config)
+        else:
+            # Jika tidak ada metode save_config, kita hanya menyimpan ke atribut config
+            client.config = config
 
         await event.reply("Akun baru berhasil ditambahkan!")
+    except asyncio.TimeoutError:
+        await event.reply("Waktu habis. Silakan coba lagi dengan mengetik .adduser")
     except Exception as e:
         await event.reply(f"Terjadi kesalahan: {str(e)}")
 
