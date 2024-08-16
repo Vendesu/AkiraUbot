@@ -11,3 +11,4 @@ GitPython
 Pillow
 emoji
 bs4
+asyncio
