@@ -42,8 +42,8 @@ async def verifikasi_2fa(client, kata_sandi):
 async def interactive_add_user(event, client):
     async def get_response(prompt):
         await event.reply(prompt)
-        response = await client.wait_for_event(events.NewMessage(from_users=event.sender_id), timeout=300)
-        return response.message.text
+        response = await client.get_messages(event.chat_id, limit=1)
+        return response[0].message
 
     try:
         api_id = await get_response("Silakan masukkan API ID:")
@@ -86,8 +86,6 @@ async def interactive_add_user(event, client):
         client.save_config(config)  # Asumsikan client memiliki metode save_config
 
         await event.reply("Akun baru berhasil ditambahkan!")
-    except asyncio.TimeoutError:
-        await event.reply("Waktu habis. Silakan coba lagi.")
     except Exception as e:
         await event.reply(f"Terjadi kesalahan: {str(e)}")
 
