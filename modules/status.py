@@ -2,13 +2,13 @@ from telethon import events, __version__ as telethon_version
 import time
 import psutil
 import sys
-import aiohttp
 import os
 from .utils import restricted_to_owner, get_readable_time
-from .update import get_version  # Impor fungsi get_version dari update.py
 
 # File untuk menyimpan waktu mulai bot
 START_TIME_FILE = "bot_start_time.txt"
+# File untuk menyimpan versi
+VERSION_FILE = os.path.join(os.path.dirname(__file__), '..', 'version.txt')
 
 def save_start_time():
     with open(START_TIME_FILE, "w") as f:
@@ -22,68 +22,42 @@ def get_bot_uptime():
     except:
         return "Tidak tersedia"
 
-async def get_isp_info():
+def get_version():
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get('https://api.ipify.org') as response:
-                ip = await response.text()
+        with open(VERSION_FILE, 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "Versi tidak diketahui"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f'https://ipapi.co/{ip}/json/') as response:
-                data = await response.json()
-                return data.get('org', 'Tidak dapat mengambil informasi ISP')
-    except:
-        return "Tidak dapat mengambil informasi ISP"
+def get_server_uptime():
+    boot_time = psutil.boot_time()
+    uptime = time.time() - boot_time
+    return get_readable_time(int(uptime))
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.status'))
     @restricted_to_owner
     async def status(event):
-        # Edit pesan asli untuk menunjukkan bahwa status sedang diambil
-        await event.edit("__Mengambil status...__")
-        
-        start_time = time.time()
-        
-        # Dapatkan waktu uptime bot
+        version = get_version()
         bot_uptime = get_bot_uptime()
-        
-        # Dapatkan waktu uptime server
-        boot_time = psutil.boot_time()
-        server_uptime = get_readable_time(int(time.time() - boot_time))
-        
-        # Dapatkan versi Python
+        server_uptime = get_server_uptime()
         python_version = sys.version.split()[0]
-        
-        # Dapatkan informasi ISP
-        isp_info = await get_isp_info()
-        
-        # Dapatkan versi bot
-        bot_version = get_version()
-        
-        end_time = time.time()
-        
-        # Hitung Round Trip Time (RTT)
-        rtt = (end_time - start_time) * 1000
-        
-        status_message = "🤖 **System Status**\n\n"
-        status_message += f"🚀 **Userbot Project:** AkiraUBot\n"
-        status_message += f"🔢 **Version:** {bot_version}\n"
-        status_message += f"🗣 **Bahasa:** Indonesia\n"
-        status_message += f"⚡ **RTT:** {rtt:.2f}ms\n"
-        status_message += f"🕒 **Bot uptime:** {bot_uptime}\n"
-        status_message += f"💻 **Server uptime:** {server_uptime}\n"
-        status_message += f"🌐 **ISP:** {isp_info}\n\n"
-        status_message += f"📡 **Telethon version:** {telethon_version}\n"
-        status_message += f"🐍 **Python version:** {python_version}\n"
-        status_message += "👨‍💻 **Code by Pop Ice Taro**\n"        
-        status_message += "💬 Chat Akira: @akiraneverdie\n"
-        status_message += "🚀 Join Grup Akira: @akiratunnel\n\n"
-        status_message += "⚠️ **PERHATIAN**:\n"
-        status_message += "Bot ini 100% GRATIS. Jika ada yang menjual, "
-        status_message += "silakan laporkan ke @akiraneverdie"
-        
-        # Edit pesan asli dengan hasil status
-        await event.edit(status_message)
+
+        cpu_usage = psutil.cpu_percent()
+        ram_usage = psutil.virtual_memory().percent
+        disk_usage = psutil.disk_usage('/').percent
+
+        status_message = "🤖 **Status AkiraUBot**\n\n"
+        status_message += f"🔢 **Versi Bot:** {version}\n"
+        status_message += f"🕒 **Uptime Bot:** {bot_uptime}\n"
+        status_message += f"💻 **Uptime Server:** {server_uptime}\n"
+        status_message += f"🐍 **Versi Python:** {python_version}\n"
+        status_message += f"📡 **Versi Telethon:** {telethon_version}\n\n"
+        status_message += f"🖥️ **Penggunaan CPU:** {cpu_usage}%\n"
+        status_message += f"🧠 **Penggunaan RAM:** {ram_usage}%\n"
+        status_message += f"💽 **Penggunaan Disk:** {disk_usage}%\n"
+
+        await event.reply(status_message)
 
 def add_commands(add_command):
-    add_command('.status', 'Menampilkan status sistem dan bot')
+    add_command('.status', '📊 Menampilkan status bot termasuk versi, uptime, dan penggunaan sistem')
