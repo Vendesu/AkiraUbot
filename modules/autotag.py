@@ -43,12 +43,14 @@ def load(client):
 
     @client.on(events.NewMessage(incoming=True))
     async def handle_tag(event):
-        if event.mentioned and not check_afk_status():
+        if event.mentioned:
             me = await event.client.get_me()
-            user_id = str(me.id)
-            tag_message = load_tag_message(user_id)
-            if user_id in tag_message:
-                await event.reply(tag_message[user_id])
+            is_afk, _ = check_afk_status(me.id)
+            if not is_afk:
+                user_id = str(me.id)
+                tag_message = load_tag_message(user_id)
+                if user_id in tag_message:
+                    await event.reply(tag_message[user_id])
 
 def add_commands(add_command):
     add_command('.settag <pesan>', 'Mengatur pesan otomatis saat di-tag')
