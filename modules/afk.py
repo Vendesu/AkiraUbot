@@ -45,6 +45,12 @@ def save_afk_status(user_id, status):
     with open(file_name, 'w') as f:
         json.dump(status, f)
 
+def check_afk_status(user_id):
+    status = load_afk_status(user_id)
+    if status:
+        return True, status
+    return False, None
+
 def load(client):
     @client.on(events.NewMessage(pattern=r'(?i)^\.afk(?: (.*))?'))
     @restricted_to_authorized
@@ -71,14 +77,14 @@ def load(client):
         if event.is_private:
             sender = await event.get_sender()
             if sender:
-                afk_status = load_afk_status(sender.id)
-                if afk_status:
+                is_afk, afk_status = check_afk_status(sender.id)
+                if is_afk:
                     await respond_to_afk(event, sender.id, afk_status)
         else:
             mentioned = await event.get_mentioned()
             for user in mentioned:
-                afk_status = load_afk_status(user.id)
-                if afk_status:
+                is_afk, afk_status = check_afk_status(user.id)
+                if is_afk:
                     await respond_to_afk(event, user.id, afk_status)
 
     async def respond_to_afk(event, user_id, afk_status):
