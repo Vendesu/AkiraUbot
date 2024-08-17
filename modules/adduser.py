@@ -2,6 +2,7 @@ from telethon import events, TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from telethon.sessions import StringSession
 import asyncio
+from .utils import add_authorized_user, restricted_to_authorized
 
 # Fungsi ini akan diimpor dari main.py saat modul dimuat
 add_user_to_config = None
@@ -89,6 +90,10 @@ async def interactive_add_user(event, client):
         # Tambahkan user baru ke konfigurasi
         add_user_to_config(api_id, api_hash, telepon, string_sesi)
 
+        # Tambahkan user baru ke daftar user yang diotorisasi
+        me = await new_client.get_me()
+        add_authorized_user(me)
+
         # Mulai client baru untuk user yang baru ditambahkan
         asyncio.create_task(start_new_client(api_id, api_hash, string_sesi))
 
@@ -102,6 +107,7 @@ def load(client):
     from main import add_user_to_config, start_new_client
 
     @client.on(events.NewMessage(pattern=r'\.adduser'))
+    @restricted_to_authorized
     async def handle_adduser(event):
         await interactive_add_user(event, client)
 

@@ -1,10 +1,12 @@
 from telethon import events, functions, types
 from telethon.tl.functions.users import GetFullUserRequest
 from telethon.errors import RPCError
+from .utils import restricted_to_authorized
 import io
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.id'))
+    @restricted_to_authorized
     async def get_id(event):
         if event.is_reply:
             replied_msg = await event.get_reply_message()
@@ -20,6 +22,7 @@ def load(client):
             await event.edit(f"💬 ID Obrolan: `{event.chat_id}`")
 
     @client.on(events.NewMessage(pattern=r'\.info'))
+    @restricted_to_authorized
     async def info(event):
         try:
             if event.is_reply:
@@ -75,6 +78,7 @@ def load(client):
             await event.edit(f"❌ Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.chatinfo'))
+    @restricted_to_authorized
     async def chatinfo(event):
         chat = await event.get_chat()
         if isinstance(chat, types.Chat) or isinstance(chat, types.Channel):

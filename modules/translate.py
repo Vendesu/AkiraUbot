@@ -1,6 +1,7 @@
 from telethon import events
 from googletrans import Translator, LANGUAGES
 import emoji
+from .utils import restricted_to_authorized
 
 translator = Translator()
 
@@ -9,6 +10,7 @@ def remove_emoji(text):
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.tr(?: |$)(.*)'))
+    @restricted_to_authorized
     async def translate_handler(event):
         if event.is_reply:
             replied = await event.get_reply_message()
@@ -29,7 +31,6 @@ def load(client):
             text_to_translate = text
 
         try:
-
             detected = translator.detect(remove_emoji(text_to_translate))
             src_lang = detected.lang
           
@@ -50,6 +51,7 @@ def load(client):
             await event.edit(f"❌ Gagal menerjemahkan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.lang(?: |$)(.*)'))
+    @restricted_to_authorized
     async def language_list(event):
         search = event.pattern_match.group(1)
         if search:
@@ -69,7 +71,7 @@ def load(client):
         if len(lang_list) > 4096:
             parts = [lang_list[i:i+4096] for i in range(0, len(lang_list), 4096)]
             for part in parts:
-                await event.edit(part)
+                await event.reply(part)
         else:
             await event.edit(lang_list)
 

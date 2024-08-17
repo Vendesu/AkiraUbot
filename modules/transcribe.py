@@ -3,14 +3,14 @@ import speech_recognition as sr
 from pydub import AudioSegment
 from moviepy.editor import VideoFileClip
 from telethon import events
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
 if not os.path.exists("temp"):
     os.makedirs("temp")
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.transcribe'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def transcribe_audio_video(event):
         if event.is_reply:
             replied = await event.get_reply_message()

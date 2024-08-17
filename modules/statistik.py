@@ -1,10 +1,10 @@
 from telethon import events
 from collections import defaultdict
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.groupstats'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def group_stats(event):
         if not event.is_group:
             await event.edit("❌ Perintah ini hanya bisa digunakan dalam grup.")

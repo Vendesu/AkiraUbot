@@ -2,11 +2,11 @@ from telethon import events
 import subprocess
 import json
 import asyncio
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.speedtest'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def speedtest_func(event):
         animation = [
             "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"

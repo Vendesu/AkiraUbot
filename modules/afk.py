@@ -1,11 +1,11 @@
 from telethon import events, types
 import time
 import random
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
+import json
+import os
 
-afk_status = {}
-
-is_afk = False
+AFK_FILE = 'afk_status_{}.json'
 
 afk_responses = [
     "Halo! {name} lagi AFK nih. {reason}",
@@ -33,22 +33,33 @@ def format_time(seconds):
     else:
         return f"{seconds} detik"
 
+def load_afk_status(user_id):
+    file_name = AFK_FILE.format(user_id)
+    if os.path.exists(file_name):
+        with open(file_name, 'r') as f:
+            return json.load(f)
+    return None
+
+def save_afk_status(user_id, status):
+    file_name = AFK_FILE.format(user_id)
+    with open(file_name, 'w') as f:
+        json.dump(status, f)
+
 def load(client):
     @client.on(events.NewMessage(pattern=r'(?i)^\.afk(?: (.*))?'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def afk_handler(event):
-        global is_afk
         reason = event.pattern_match.group(1)
         user = await event.get_sender()
         user_id = user.id
         first_name = user.first_name if user.first_name else "Kamu"
         
-        afk_status[user_id] = {
+        afk_status = {
             'time': time.time(),
             'reason': reason if reason else random.choice(default_reasons),
             'name': first_name
         }
-        is_afk = True
+        save_afk_status(user_id, afk_status)
         
         if reason:
             await event.edit(f"Oke deh, {first_name} AFK ya. Kalo ada yang nyariin, aku bilang: {reason}")
@@ -59,55 +70,41 @@ def load(client):
     async def afk_responder(event):
         if event.is_private:
             sender = await event.get_sender()
-            if sender and sender.id in afk_status:
-                await respond_to_afk(event, sender.id)
+            if sender:
+                afk_status = load_afk_status(sender.id)
+                if afk_status:
+                    await respond_to_afk(event, sender.id, afk_status)
         else:
-            mentioned_ids = await get_mentioned_ids(event)
-            for user_id in mentioned_ids:
-                if user_id in afk_status:
-                    await respond_to_afk(event, user_id)
+            mentioned = await event.get_mentioned()
+            for user in mentioned:
+                afk_status = load_afk_status(user.id)
+                if afk_status:
+                    await respond_to_afk(event, user.id, afk_status)
 
-    async def get_mentioned_ids(event):
-        mentioned_ids = set()
-        if event.message.entities:
-            for entity in event.message.entities:
-                if isinstance(entity, types.MessageEntityMentionName):
-                    mentioned_ids.add(entity.user_id)
-                elif isinstance(entity, types.MessageEntityMention):
-                    try:
-                        text = event.message.text[entity.offset:entity.offset+entity.length]
-                        user = await event.client.get_entity(text)
-                        if isinstance(user, types.User):
-                            mentioned_ids.add(user.id)
-                    except:
-                        pass
-        return mentioned_ids
-
-    async def respond_to_afk(event, user_id):
-        afk_time = time.time() - afk_status[user_id]['time']
+    async def respond_to_afk(event, user_id, afk_status):
+        afk_time = time.time() - afk_status['time']
         time_str = format_time(afk_time)
-        reason = afk_status[user_id]['reason']
-        name = afk_status[user_id]['name']
+        reason = afk_status['reason']
+        name = afk_status['name']
         
         response = random.choice(afk_responses)
         response = response.format(name=name, reason=reason)
         response += f"\nUdah AFK {time_str} nih."
         
-        await event.edit(response)
+        await event.reply(response)
 
     @client.on(events.NewMessage(pattern=r'(?i)^\.noafk'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def noafk_handler(event):
-        global is_afk
         user = await event.get_sender()
         user_id = user.id
         
-        if user_id in afk_status:
-            afk_time = time.time() - afk_status[user_id]['time']
+        afk_status = load_afk_status(user_id)
+        if afk_status:
+            afk_time = time.time() - afk_status['time']
             time_str = format_time(afk_time)
-            name = afk_status[user_id]['name']
-            del afk_status[user_id]
-            is_afk = False
+            name = afk_status['name']
+            os.remove(AFK_FILE.format(user_id))
             
             messages = [
                 f"Halo semuanya! {name} balik lagi nih setelah AFK {time_str}! 🎉",
@@ -123,6 +120,3 @@ def load(client):
 def add_commands(add_command):
     add_command('.afk [alasan]', 'Ngasih tau yang lain kalo kamu lagi AFK')
     add_command('.noafk', 'Nonaktifin mode AFK, biar yang lain tau kamu udah balik')
-
-def check_afk_status():
-    return is_afk

@@ -1,7 +1,7 @@
 from telethon import events
 import aiohttp
 from bs4 import BeautifulSoup
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
 async def search_duckduckgo(query):
     url = f"https://html.duckduckgo.com/html/?q={query}"
@@ -25,7 +25,7 @@ async def search_duckduckgo(query):
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.ddg (.+)'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def duckduckgo_search(event):
         query = event.pattern_match.group(1)
         await event.edit(f"🔍 Mencari '{query}' di DuckDuckGo...")

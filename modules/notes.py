@@ -3,22 +3,23 @@ import json
 import os
 import time
 from telethon.tl.types import MessageMediaDocument, MessageMediaPhoto
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
-NOTES_FILE = 'notes.json'
+NOTES_FILE = 'notes_{}.json'
 COOLDOWN_TIME = 3
 
-def load_notes():
-    if os.path.exists(NOTES_FILE):
-        with open(NOTES_FILE, 'r', encoding='utf-8') as f:
+def load_notes(user_id):
+    file_name = NOTES_FILE.format(user_id)
+    if os.path.exists(file_name):
+        with open(file_name, 'r', encoding='utf-8') as f:
             return json.load(f)
     return {}
 
-def save_notes(notes):
-    with open(NOTES_FILE, 'w', encoding='utf-8') as f:
+def save_notes(user_id, notes):
+    file_name = NOTES_FILE.format(user_id)
+    with open(file_name, 'w', encoding='utf-8') as f:
         json.dump(notes, f, ensure_ascii=False)
 
-notes = load_notes()
 last_used = {}
 
 def sanitize_unicode(text):
@@ -26,8 +27,11 @@ def sanitize_unicode(text):
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.save (.+)'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def save_note_handler(event):
+        user_id = event.sender_id
+        notes = load_notes(user_id)
+        
         note_name, _, note_content = event.pattern_match.group(1).partition(' ')
         
         if not note_content and not event.media:
@@ -51,12 +55,14 @@ def load(client):
                 return
         
         notes[note_name] = note_data
-        save_notes(notes)
+        save_notes(user_id, notes)
         
-        await event.edit(f'Note "{note_name}" berhasil disimpan dan dapat digunakan di semua chat.')
+        await event.edit(f'Note "{note_name}" berhasil disimpan.')
 
     @client.on(events.NewMessage(pattern=r'\.note (.+)'))
+    @restricted_to_authorized
     async def get_note_handler(event):
+        user_id = event.sender_id
         note_name = event.pattern_match.group(1)
         
         current_time = time.time()
@@ -67,6 +73,7 @@ def load(client):
         
         last_used[note_name] = current_time
         
+        notes = load_notes(user_id)
         if note_name in notes:
             note_data = notes[note_name]
             text = note_data.get('text', '')
@@ -91,7 +98,10 @@ def load(client):
             await event.edit(f'Note "{note_name}" tidak ditemukan.')
 
     @client.on(events.NewMessage(pattern=r'\.notes'))
+    @restricted_to_authorized
     async def list_notes_handler(event):
+        user_id = event.sender_id
+        notes = load_notes(user_id)
         if notes:
             note_list = "\n".join(notes.keys())
             await event.edit(f'Notes yang tersedia:\n{note_list}')
@@ -99,13 +109,15 @@ def load(client):
             await event.edit('Belum ada notes yang disimpan.')
 
     @client.on(events.NewMessage(pattern=r'\.clear (.+)'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def clear_note_handler(event):
+        user_id = event.sender_id
         note_name = event.pattern_match.group(1)
         
+        notes = load_notes(user_id)
         if note_name in notes:
             del notes[note_name]
-            save_notes(notes)
+            save_notes(user_id, notes)
             await event.edit(f'Note "{note_name}" berhasil dihapus.')
         else:
             await event.edit(f'Note "{note_name}" tidak ditemukan.')

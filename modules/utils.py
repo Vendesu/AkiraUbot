@@ -3,26 +3,23 @@ from functools import wraps
 import time
 import math
 
-owner_id = None  # Ini akan diset saat userbot pertama kali dijalankan
+authorized_users = set()
 
-def set_owner_id(id):
-    global owner_id
-    owner_id = id
+def add_authorized_user(user):
+    authorized_users.add(user.id)
 
-def restricted_to_owner(func):
+def is_authorized(user_id):
+    return user_id in authorized_users
+
+def restricted_to_authorized(func):
     @wraps(func)
     async def wrapper(event):
-        global owner_id
-        if owner_id is None:
-            me = await event.client.get_me()
-            owner_id = me.id
-        
         sender = await event.get_sender()
-        if sender and sender.id == owner_id:
+        if sender and is_authorized(sender.id):
             return await func(event)
         else:
-            # Opsional: Balas dengan pesan jika bukan pemilik yang mencoba menggunakan perintah
-            # await event.reply("Maaf, perintah ini hanya dapat digunakan oleh pemilik userbot.")
+            # Opsional: Balas dengan pesan jika bukan user yang diizinkan yang mencoba menggunakan perintah
+            # await event.reply("Maaf, perintah ini hanya dapat digunakan oleh pengguna yang diizinkan.")
             return
     return wrapper
 

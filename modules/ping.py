@@ -2,11 +2,11 @@ from telethon import events
 import time
 import psutil
 import platform
-from .utils import restricted_to_owner, get_readable_time, humanbytes
+from .utils import restricted_to_authorized, get_readable_time, humanbytes
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.ping'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def ping(event):
         start = time.time()
         message = await event.edit("Pong!")

@@ -3,7 +3,7 @@ import time
 import psutil
 import sys
 import os
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
 FILE_VERSI = os.path.join(os.path.dirname(__file__), '..', 'version.txt')
 
@@ -40,7 +40,7 @@ def hitung_umur_komputer():
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.status'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def tampilkan_status(event):
         versi_bot = cek_versi()
         umur_komputer = hitung_umur_komputer()

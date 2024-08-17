@@ -2,12 +2,12 @@ from telethon import events, errors
 from telethon.tl.functions.channels import EditTitleRequest, EditPhotoRequest
 from telethon.tl.functions.messages import EditChatTitleRequest
 from telethon.tl.types import InputChatUploadedPhoto, ChatPhotoEmpty
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 import io
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.setgpic'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def set_group_pic(event):
         if event.is_reply:
             replied_message = await event.get_reply_message()
@@ -27,7 +27,7 @@ def load(client):
             await event.reply("❌ Silakan balas ke sebuah foto.")
 
     @client.on(events.NewMessage(pattern=r'\.setgtitle (.+)'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def set_group_title(event):
         new_title = event.pattern_match.group(1)
         try:
@@ -40,7 +40,7 @@ def load(client):
             await event.reply(f"❌ Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.setgdesc (.+)'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def set_group_desc(event):
         new_desc = event.pattern_match.group(1)
         try:
@@ -50,7 +50,7 @@ def load(client):
             await event.reply(f"❌ Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.addgemoji (.+)'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def add_group_emoji(event):
         emoji = event.pattern_match.group(1)
         try:
@@ -68,7 +68,7 @@ def load(client):
             await event.reply(f"❌ Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.gpinfo'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def group_info(event):
         try:
             group = await event.get_chat()

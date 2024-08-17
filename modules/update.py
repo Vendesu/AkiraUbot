@@ -4,7 +4,7 @@ import sys
 import os
 from git import Repo
 from git.exc import GitCommandError
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 import subprocess
 
 # URL repositori GitHub AkiraUBot
@@ -32,7 +32,7 @@ def update_version():
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.update'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def update_bot(event):
         await event.edit("🔄 Memeriksa pembaruan...")
         try:
@@ -78,13 +78,13 @@ def load(client):
             await event.edit(f"❌ Terjadi kesalahan yang tidak diketahui: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.version'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def get_bot_version(event):
         version = get_version()
         await event.reply(f"🤖 Versi AkiraUBot saat ini: {version}")
 
     @client.on(events.NewMessage(pattern=r'\.changelog'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def get_changelog_command(event):
         await event.edit("🔍 Mengambil changelog...")
         try:
@@ -107,7 +107,7 @@ def load(client):
             await event.edit(f"❌ Terjadi kesalahan saat mengambil changelog: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.checkupdate'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def check_update(event):
         await event.edit("🔍 Memeriksa pembaruan...")
         try:

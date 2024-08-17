@@ -1,7 +1,7 @@
 from telethon import events
 from telethon.tl.types import InputMessagesFilterVideo, InputMessagesFilterVoice
 import random
-from .utils import restricted_to_owner
+from .utils import restricted_to_authorized
 
 # Daftar chat yang di-blacklist (opsional)
 BLACKLIST_CHAT = []
@@ -17,7 +17,7 @@ async def get_random_media(client, channel, filter_type):
 
 def load(client):
     @client.on(events.NewMessage(pattern=r'\.asupan'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def asupan(event):
         xx = await event.edit("Tunggu Sebentar...")
         try:
@@ -35,7 +35,7 @@ def load(client):
             await xx.edit(f"Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.desahcewe'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def desahcewe(event):
         if event.chat_id in BLACKLIST_CHAT:
             return await event.edit("Perintah ini Dilarang digunakan di Group ini")
@@ -56,7 +56,7 @@ def load(client):
             await xx.edit(f"Terjadi kesalahan: {str(e)}")
 
     @client.on(events.NewMessage(pattern=r'\.desahcowo'))
-    @restricted_to_owner
+    @restricted_to_authorized
     async def desahcowo(event):
         if event.chat_id in BLACKLIST_CHAT:
             return await event.edit("Perintah ini Dilarang digunakan di Group ini")
