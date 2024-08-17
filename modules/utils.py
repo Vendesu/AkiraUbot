@@ -2,11 +2,15 @@ from telethon import events
 from functools import wraps
 import time
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 authorized_users = set()
 
 def add_authorized_user(user):
     authorized_users.add(user.id)
+    logger.info(f"Added authorized user: {user.id} ({user.first_name})")
 
 def is_authorized(user_id):
     return user_id in authorized_users
@@ -16,8 +20,10 @@ def restricted_to_authorized(func):
     async def wrapper(event):
         sender = await event.get_sender()
         if sender and is_authorized(sender.id):
+            logger.info(f"Authorized user {sender.id} executed command: {event.raw_text}")
             return await func(event)
         else:
+            logger.warning(f"Unauthorized user {sender.id} attempted to execute command: {event.raw_text}")
             # Opsional: Balas dengan pesan jika bukan user yang diizinkan yang mencoba menggunakan perintah
             # await event.reply("Maaf, perintah ini hanya dapat digunakan oleh pengguna yang diizinkan.")
             return
