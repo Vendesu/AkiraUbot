@@ -39,39 +39,33 @@ async def verifikasi_2fa(client, kata_sandi):
         return None, str(e)
 
 async def interactive_add_user(event, client):
-    sender = event.sender_id
     chat = event.chat_id
-    
-    async def wait_for_input(prompt):
-        await client.send_message(chat, prompt)
-        while True:
-            try:
-                response = await client.get_messages(chat, limit=1)
-                if response and response[0].from_id == sender:
-                    return response[0].text
-            except:
-                pass
-            await asyncio.sleep(1)
+    sender = event.sender_id
+
+    async def get_reply(message):
+        await client.send_message(chat, message)
+        response = await client.wait_event(events.NewMessage(chats=chat, from_users=sender, incoming=True))
+        return response.message.text
 
     try:
         await client.send_message(chat, "Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
-        
-        api_id = await wait_for_input("Langkah 1/4: Masukkan API ID:")
-        api_hash = await wait_for_input("Langkah 2/4: Masukkan API Hash:")
-        telepon = await wait_for_input("Langkah 3/4: Masukkan nomor telepon (format: +62xxxxxxxxxx):")
+
+        api_id = await get_reply("Balas pesan ini dengan API ID:")
+        api_hash = await get_reply("Balas pesan ini dengan API Hash:")
+        telepon = await get_reply("Balas pesan ini dengan nomor telepon (format: +62xxxxxxxxxx):")
 
         await client.send_message(chat, "Memproses... Mengirim kode OTP.")
         new_client, result = await tambah_pengguna(api_id, api_hash, telepon)
 
         if result == "OTP_NEEDED":
-            otp = await wait_for_input("Langkah 4/4: Masukkan kode OTP yang telah dikirim ke nomor Anda:")
+            otp = await get_reply("Balas pesan ini dengan kode OTP yang telah dikirim ke nomor Anda:")
 
             string_sesi, error = await verifikasi_otp(new_client, telepon, otp)
             if error:
                 await client.send_message(chat, f"Error: {error}")
                 return
             elif string_sesi == "2FA_NEEDED":
-                pwd = await wait_for_input("Akun ini menggunakan 2FA. Masukkan kata sandi 2FA:")
+                pwd = await get_reply("Akun ini menggunakan 2FA. Balas pesan ini dengan kata sandi 2FA:")
 
                 string_sesi, error = await verifikasi_2fa(new_client, pwd)
                 if error:
