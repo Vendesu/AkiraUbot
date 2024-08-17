@@ -12,6 +12,7 @@ def load(client):
     @restricted_to_authorized
     async def help_command(event):
         try:
+            logger.info("Help command received")
             command = event.pattern_match.group(1)
             if command:
                 await show_command_help(event, command)
@@ -19,7 +20,7 @@ def load(client):
                 await show_module_list(event, 0)
         except Exception as e:
             logger.error(f"Error in help_command: {str(e)}")
-            await event.reply("An error occurred while processing the help command.")
+            await event.reply(f"An error occurred while processing the help command: {str(e)}")
 
     async def show_module_list(event, page):
         try:
@@ -46,28 +47,37 @@ def load(client):
             text += "Pilih modul untuk melihat perintah yang tersedia."
 
             logger.info(f"Sending module list with {len(buttons)} button rows")
-            await event.reply(text, buttons=buttons)
+            
+            # Kirim pesan teks terlebih dahulu
+            await event.reply(text)
+            
+            # Kemudian kirim pesan dengan tombol-tombol
+            await event.reply("Pilih modul:", buttons=buttons)
+            
+            logger.info("Both messages (text and buttons) have been sent")
         except Exception as e:
             logger.error(f"Error in show_module_list: {str(e)}")
-            await event.reply("An error occurred while displaying the module list.")
+            await event.reply(f"An error occurred while displaying the module list: {str(e)}")
 
     @client.on(events.CallbackQuery(pattern=r"module:(.+)"))
     async def module_callback(event):
         try:
             module_name = event.data_match.group(1).decode()
+            logger.info(f"Module callback received for {module_name}")
             await show_module_commands(event, module_name)
         except Exception as e:
             logger.error(f"Error in module_callback: {str(e)}")
-            await event.answer("An error occurred while processing your selection.")
+            await event.answer(f"An error occurred while processing your selection: {str(e)}")
 
     @client.on(events.CallbackQuery(pattern=r"page:(\d+)"))
     async def page_callback(event):
         try:
             page = int(event.data_match.group(1))
+            logger.info(f"Page callback received for page {page}")
             await show_module_list(event, page)
         except Exception as e:
             logger.error(f"Error in page_callback: {str(e)}")
-            await event.answer("An error occurred while changing the page.")
+            await event.answer(f"An error occurred while changing the page: {str(e)}")
 
     async def show_module_commands(event, module_name):
         try:
@@ -78,17 +88,19 @@ def load(client):
                 await event.edit(text, buttons=[Button.inline("🔙 Kembali", "back")])
             else:
                 await event.edit(f"❌ Modul '{module_name}' tidak ditemukan.")
+            logger.info(f"Module commands displayed for {module_name}")
         except Exception as e:
             logger.error(f"Error in show_module_commands: {str(e)}")
-            await event.edit("An error occurred while displaying module commands.")
+            await event.edit(f"An error occurred while displaying module commands: {str(e)}")
 
     @client.on(events.CallbackQuery(pattern=r"back"))
     async def back_callback(event):
         try:
+            logger.info("Back callback received")
             await show_module_list(event, 0)
         except Exception as e:
             logger.error(f"Error in back_callback: {str(e)}")
-            await event.answer("An error occurred while going back to the module list.")
+            await event.answer(f"An error occurred while going back to the module list: {str(e)}")
 
     async def show_command_help(event, command):
         try:
@@ -99,16 +111,20 @@ def load(client):
                         help_text += f"📂 **Modul:** {module.capitalize()}\n"
                         help_text += f"📝 **Deskripsi:** {desc}"
                         await event.reply(help_text)
+                        logger.info(f"Help displayed for command {command}")
                         return
             await event.reply(f"❌ Perintah '{command}' tidak ditemukan.")
+            logger.warning(f"Command '{command}' not found in help")
         except Exception as e:
             logger.error(f"Error in show_command_help: {str(e)}")
-            await event.reply("An error occurred while displaying command help.")
+            await event.reply(f"An error occurred while displaying command help: {str(e)}")
 
 def add_module_commands(add_command_func):
     module_name = add_command_func.__module__.split('.')[-1]
     add_command_func(lambda cmd, desc: command_list[module_name].append((cmd, desc)))
+    logger.info(f"Commands added for module {module_name}")
 
 def add_commands(add_command):
     add_command('.help', '📚 Menampilkan daftar semua perintah')
     add_command('.help <perintah>', '🔍 Menampilkan informasi detail tentang perintah tertentu')
+    logger.info("Help commands added")
