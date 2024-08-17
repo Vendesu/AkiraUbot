@@ -6,6 +6,7 @@ import logging
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError
+from modules.utils import add_authorized_user
 
 # Konfigurasi logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -73,11 +74,13 @@ async def main():
     if not configs:
         client = await setup_new_client()
         clients.append(client)
+        add_authorized_user(await client.get_me())
     else:
         for config in configs:
             client = await start_client(config['string_sesi'], config['api_id'], config['api_hash'])
             if client:
                 clients.append(client)
+                add_authorized_user(await client.get_me())
                 logger.info(f"Client for {config['telepon']} started successfully.")
 
     if clients:
@@ -85,6 +88,7 @@ async def main():
         from modules import load_modules
         for client in clients:
             load_modules(client)
+            logger.info(f"Modules loaded for client {(await client.get_me()).first_name}")
 
         logger.info(f"Userbot running for {len(clients)} account(s).")
 
@@ -98,8 +102,22 @@ async def start_new_client(api_id, api_hash, string_session):
     if client:
         from modules import load_modules
         load_modules(client)
+        add_authorized_user(await client.get_me())
         logger.info(f"New client started and modules loaded.")
         await client.run_until_disconnected()
 
+def exception_handler(loop, context):
+    exception = context.get('exception')
+    logger.error(f"Unhandled exception: {str(exception)}")
+    logger.error(f"Exception details: {context}")
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.set_exception_handler(exception_handler)
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}")
+        sys.exit(1)
