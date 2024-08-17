@@ -2,7 +2,7 @@ from telethon import events, TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from telethon.sessions import StringSession
 import asyncio
-from main import add_user_to_config, start_new_client
+from config_manager import add_user_to_config
 
 async def tambah_pengguna(api_id, api_hash, telepon):
     try:
@@ -87,6 +87,7 @@ async def interactive_add_user(event, client):
         add_user_to_config(api_id, api_hash, telepon, string_sesi)
 
         # Mulai client baru untuk user yang baru ditambahkan
+        from main import start_new_client
         start_new_client(api_id, api_hash, string_sesi)
 
         await client.send_message(chat, "Akun baru berhasil ditambahkan dan diaktifkan!")
