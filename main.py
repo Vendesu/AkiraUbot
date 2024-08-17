@@ -1,114 +1,106 @@
-from telethon import events, TelegramClient
-from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
-from telethon.sessions import StringSession
+import os
+import sys
 import asyncio
+import json
+import logging
+from telethon import TelegramClient
+from telethon.sessions import StringSession
+from telethon.errors import SessionPasswordNeededError
 
-# Fungsi ini akan diimpor dari main.py saat modul dimuat
-add_user_to_config = None
-start_new_client = None
+# Konfigurasi logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-async def tambah_pengguna(api_id, api_hash, telepon):
+# Konfigurasi file
+CONFIG_FILE = 'config.json'
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_config(config):
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump(config, f, indent=2)
+
+def add_user_to_config(api_id, api_hash, phone, string_session):
+    configs = load_config()
+    new_config = {
+        "api_id": api_id,
+        "api_hash": api_hash,
+        "telepon": phone,
+        "string_sesi": string_session
+    }
+    configs.append(new_config)
+    save_config(configs)
+    logger.info(f"New user {phone} added to config.")
+
+async def start_client(session, api_id, api_hash):
+    client = TelegramClient(StringSession(session), api_id, api_hash)
     try:
-        client = TelegramClient(StringSession(), api_id, api_hash)
-        await client.connect()
-
-        if not await client.is_user_authorized():
-            await client.send_code_request(telepon)
-            return client, "OTP_NEEDED"
-
-        string_sesi = StringSession.save(client.session)
-        return client, string_sesi
+        await client.start()
+        return client
     except Exception as e:
-        return None, str(e)
+        logger.error(f"Error starting client: {str(e)}")
+        return None
 
-async def verifikasi_otp(client, telepon, kode_otp):
-    try:
-        await client.sign_in(telepon, kode_otp)
-        string_sesi = StringSession.save(client.session)
-        return string_sesi, None
-    except PhoneCodeInvalidError:
-        return None, "Kode OTP tidak valid. Silakan coba lagi."
-    except SessionPasswordNeededError:
-        return "2FA_NEEDED", None
-    except Exception as e:
-        return None, str(e)
+async def setup_new_client():
+    print("Tidak ada konfigurasi yang ditemukan. Mari setup akun baru.")
+    api_id = input("Masukkan API ID: ")
+    api_hash = input("Masukkan API Hash: ")
+    phone = input("Masukkan nomor telepon (format: +62xxxxxxxxxx): ")
 
-async def verifikasi_2fa(client, kata_sandi):
-    try:
-        await client.sign_in(password=kata_sandi)
-        string_sesi = StringSession.save(client.session)
-        return string_sesi, None
-    except Exception as e:
-        return None, str(e)
+    client = TelegramClient(StringSession(), api_id, api_hash)
+    await client.start()
 
-async def interactive_add_user(event, client):
-    chat = event.chat_id
-    sender = event.sender_id
+    if not await client.is_user_authorized():
+        await client.send_code_request(phone)
+        try:
+            await client.sign_in(phone, input('Masukkan kode OTP: '))
+        except SessionPasswordNeededError:
+            await client.sign_in(password=input('Password 2FA diperlukan: '))
 
-    async def get_reply(message):
-        prompt = await client.send_message(chat, message)
-        while True:
-            try:
-                response = await client.get_messages(chat, limit=1)
-                if response and response[0].sender_id == sender and response[0].id > prompt.id:
-                    return response[0].text
-            except Exception as e:
-                print(f"Error in get_reply: {e}")
-            await asyncio.sleep(1)
+    string_session = client.session.save()
+    add_user_to_config(api_id, api_hash, phone, string_session)
+    logger.info("Akun baru berhasil ditambahkan.")
+    return client
 
-    try:
-        await client.send_message(chat, "Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
+async def main():
+    configs = load_config()
+    clients = []
 
-        api_id = await get_reply("Balas pesan ini dengan API ID:")
-        api_hash = await get_reply("Balas pesan ini dengan API Hash:")
-        telepon = await get_reply("Balas pesan ini dengan nomor telepon (format: +62xxxxxxxxxx):")
+    if not configs:
+        client = await setup_new_client()
+        clients.append(client)
+    else:
+        for config in configs:
+            client = await start_client(config['string_sesi'], config['api_id'], config['api_hash'])
+            if client:
+                clients.append(client)
+                logger.info(f"Client for {config['telepon']} started successfully.")
 
-        await client.send_message(chat, "Memproses... Mengirim kode OTP.")
-        new_client, result = await tambah_pengguna(api_id, api_hash, telepon)
+    if clients:
+        # Load modules for each client
+        from modules import load_modules
+        for client in clients:
+            load_modules(client)
 
-        if result == "OTP_NEEDED":
-            otp = await get_reply("Balas pesan ini dengan kode OTP yang telah dikirim ke nomor Anda:")
+        logger.info(f"Userbot running for {len(clients)} account(s).")
 
-            string_sesi, error = await verifikasi_otp(new_client, telepon, otp)
-            if error:
-                await client.send_message(chat, f"Error: {error}")
-                return
-            elif string_sesi == "2FA_NEEDED":
-                pwd = await get_reply("Akun ini menggunakan 2FA. Balas pesan ini dengan kata sandi 2FA:")
+        # Keep the script running
+        await asyncio.gather(*(client.run_until_disconnected() for client in clients))
+    else:
+        logger.error("No clients could be started. Please check your configuration.")
 
-                string_sesi, error = await verifikasi_2fa(new_client, pwd)
-                if error:
-                    await client.send_message(chat, f"Error: {error}")
-                    return
-        elif isinstance(result, str) and result.startswith("Error"):
-            await client.send_message(chat, f"Terjadi kesalahan: {result}")
-            return
-        else:
-            string_sesi = result
+# These functions will be used by adduser.py
+async def start_new_client(api_id, api_hash, string_session):
+    client = await start_client(string_session, api_id, api_hash)
+    if client:
+        from modules import load_modules
+        load_modules(client)
+        logger.info(f"New client started and modules loaded.")
+        await client.run_until_disconnected()
 
-        # Tambahkan user baru ke konfigurasi
-        add_user_to_config(api_id, api_hash, telepon, string_sesi)
-
-        # Mulai client baru untuk user yang baru ditambahkan
-        asyncio.create_task(start_new_client(api_id, api_hash, string_sesi))
-
-        await client.send_message(chat, "Akun baru berhasil ditambahkan dan diaktifkan!")
-    except Exception as e:
-        await client.send_message(chat, f"Terjadi kesalahan: {str(e)}")
-        print(f"Error in interactive_add_user: {e}")
-
-def load(client):
-    global add_user_to_config, start_new_client
-    from main import add_user_to_config, start_new_client
-
-    @client.on(events.NewMessage(pattern=r'\.adduser'))
-    async def handle_adduser(event):
-        sender = await event.get_sender()
-        me = await client.get_me()
-        if sender.id != me.id:
-            return  # Hanya pemilik bot yang bisa menggunakan perintah ini
-
-        await interactive_add_user(event, client)
-
-def add_commands(add_command):
-    add_command('.adduser', 'Menambahkan akun Telegram baru ke userbot')
+if __name__ == '__main__':
+    asyncio.run(main())
