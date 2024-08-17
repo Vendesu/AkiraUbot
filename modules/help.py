@@ -74,17 +74,6 @@ def load(client):
                     return
         await event.reply(f"❌ Perintah '{command}' tidak ditemukan.")
 
-    @client.on(events.NewMessage(pattern=r'\.listmodules'))
-    @restricted_to_authorized
-    async def list_modules(event):
-        modules = sorted(command_list.keys())
-        module_list = "📚 **Daftar Modul AkiraUBot:**\n\n"
-        for module in modules:
-            cmd_count = len(command_list[module])
-            module_list += f"• **{module.capitalize()}** ({cmd_count} perintah)\n"
-        module_list += "\nGunakan `.help <nama_modul>` untuk melihat perintah dalam modul tertentu."
-        await event.reply(module_list)
-
 def add_module_commands(add_command_func):
     module_name = add_command_func.__module__.split('.')[-1]
     add_command_func(lambda cmd, desc: command_list[module_name].append((cmd, desc)))
@@ -92,4 +81,3 @@ def add_module_commands(add_command_func):
 def add_commands(add_command):
     add_command('.help', '📚 Menampilkan daftar semua perintah')
     add_command('.help <perintah>', '🔍 Menampilkan informasi detail tentang perintah tertentu')
-    add_command('.listmodules', '📂 Menampilkan daftar semua modul yang tersedia')
