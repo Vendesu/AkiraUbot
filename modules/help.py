@@ -29,13 +29,7 @@ def load(client):
         
         help_text += "Gunakan `.help <perintah>` untuk informasi lebih detail tentang perintah tertentu."
         
-        # Send message in parts if it's too long
-        if len(help_text) > 4096:
-            parts = [help_text[i:i+4096] for i in range(0, len(help_text), 4096)]
-            for part in parts:
-                await event.reply(part)
-        else:
-            await event.reply(help_text)
+        await send_long_message(event, help_text)
 
     async def show_command_help(event, command):
         for module, commands in command_list.items():
@@ -44,7 +38,7 @@ def load(client):
                     help_text = f"📌 **Perintah:** `{cmd}`\n"
                     help_text += f"📂 **Modul:** {module.capitalize()}\n"
                     help_text += f"📝 **Deskripsi:**\n{desc}"
-                    await event.reply(help_text)
+                    await send_long_message(event, help_text)
                     return
         await event.reply(f"❌ Perintah '{command}' tidak ditemukan.")
 
@@ -55,9 +49,9 @@ def load(client):
         module_list = "📚 **Daftar Modul AkiraUBot:**\n\n"
         for module in modules:
             cmd_count = len(command_list[module])
-            module_list += f"• **{module.capitalize().ljust(15)}** ({cmd_count} perintah)\n"
+            module_list += f"• **{module.capitalize().ljust(20)}** ({cmd_count} perintah)\n"
         module_list += "\nGunakan `.help <nama_modul>` untuk melihat perintah dalam modul tertentu."
-        await event.reply(module_list)
+        await send_long_message(event, module_list)
 
     @client.on(events.NewMessage(pattern=r'\.help (.+)'))
     @restricted_to_authorized
@@ -67,9 +61,34 @@ def load(client):
             help_text = f"📚 **Perintah dalam modul {module_name.capitalize()}:**\n\n"
             for cmd, desc in command_list[module_name]:
                 help_text += f"• `{cmd.ljust(15)}`: {desc}\n\n"
-            await event.reply(help_text)
+            await send_long_message(event, help_text)
         else:
             await event.reply(f"❌ Modul '{module_name}' tidak ditemukan.")
+
+    async def send_long_message(event, text):
+        max_length = 4096
+        if len(text) <= max_length:
+            await event.reply(text)
+        else:
+            parts = []
+            while len(text) > 0:
+                if len(text) > max_length:
+                    part = text[:max_length]
+                    last_newline = part.rfind('\n')
+                    if last_newline != -1:
+                        parts.append(part[:last_newline])
+                        text = text[last_newline+1:]
+                    else:
+                        parts.append(part)
+                        text = text[max_length:]
+                else:
+                    parts.append(text)
+                    text = ''
+            
+            for i, part in enumerate(parts):
+                if i > 0:
+                    part = f"(Lanjutan {i+1}/{len(parts)})\n\n" + part
+                await event.reply(part)
 
 def add_module_commands(add_command_func):
     module_name = add_command_func.__module__.split('.')[-1]
