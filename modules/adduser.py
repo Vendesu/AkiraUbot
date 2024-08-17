@@ -1,8 +1,8 @@
 from telethon import events, TelegramClient
-from telethon.tl.types import InputPeerUser, InputPeerSelf
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from telethon.sessions import StringSession
 import asyncio
+from main import add_user_to_config, start_new_client
 
 async def tambah_pengguna(api_id, api_hash, telepon):
     try:
@@ -57,18 +57,14 @@ async def interactive_add_user(event, client):
         await client.send_message(chat, "Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
 
         api_id = await get_reply("Balas pesan ini dengan API ID:")
-        print(f"Received API ID: {api_id}")
         api_hash = await get_reply("Balas pesan ini dengan API Hash:")
-        print(f"Received API Hash: {api_hash}")
         telepon = await get_reply("Balas pesan ini dengan nomor telepon (format: +62xxxxxxxxxx):")
-        print(f"Received Phone Number: {telepon}")
 
         await client.send_message(chat, "Memproses... Mengirim kode OTP.")
         new_client, result = await tambah_pengguna(api_id, api_hash, telepon)
 
         if result == "OTP_NEEDED":
             otp = await get_reply("Balas pesan ini dengan kode OTP yang telah dikirim ke nomor Anda:")
-            print(f"Received OTP: {otp}")
 
             string_sesi, error = await verifikasi_otp(new_client, telepon, otp)
             if error:
@@ -76,7 +72,6 @@ async def interactive_add_user(event, client):
                 return
             elif string_sesi == "2FA_NEEDED":
                 pwd = await get_reply("Akun ini menggunakan 2FA. Balas pesan ini dengan kata sandi 2FA:")
-                print(f"Received 2FA password")
 
                 string_sesi, error = await verifikasi_2fa(new_client, pwd)
                 if error:
@@ -88,22 +83,13 @@ async def interactive_add_user(event, client):
         else:
             string_sesi = result
 
-        # Simpan konfigurasi baru
-        config = getattr(client, 'config', [])
-        new_config = {
-            "api_id": api_id,
-            "api_hash": api_hash,
-            "telepon": telepon,
-            "string_sesi": string_sesi
-        }
-        config.append(new_config)
-        
-        if hasattr(client, 'save_config') and callable(client.save_config):
-            client.save_config(config)
-        else:
-            client.config = config
+        # Tambahkan user baru ke konfigurasi
+        add_user_to_config(api_id, api_hash, telepon, string_sesi)
 
-        await client.send_message(chat, "Akun baru berhasil ditambahkan!")
+        # Mulai client baru untuk user yang baru ditambahkan
+        start_new_client(api_id, api_hash, string_sesi)
+
+        await client.send_message(chat, "Akun baru berhasil ditambahkan dan diaktifkan!")
     except Exception as e:
         await client.send_message(chat, f"Terjadi kesalahan: {str(e)}")
         print(f"Error in interactive_add_user: {e}")
