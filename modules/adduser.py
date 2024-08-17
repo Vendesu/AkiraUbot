@@ -92,7 +92,7 @@ async def interactive_add_user(event, client):
         # Mulai client baru untuk user yang baru ditambahkan
         asyncio.create_task(start_new_client(api_id, api_hash, string_sesi))
 
-        await client.send_message(chat, "Akun baru berhasil ditambahkan dan diaktifkan!")
+        await client.send_message(chat, "Akun baru berhasil ditambahkan dan diaktifkan! Anda sekarang dapat menggunakan semua perintah modul.")
     except Exception as e:
         await client.send_message(chat, f"Terjadi kesalahan: {str(e)}")
         print(f"Error in interactive_add_user: {e}")
@@ -103,11 +103,6 @@ def load(client):
 
     @client.on(events.NewMessage(pattern=r'\.adduser'))
     async def handle_adduser(event):
-        sender = await event.get_sender()
-        me = await client.get_me()
-        if sender.id != me.id:
-            return  # Hanya pemilik bot yang bisa menggunakan perintah ini
-
         await interactive_add_user(event, client)
 
 def add_commands(add_command):
