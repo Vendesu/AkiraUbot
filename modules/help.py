@@ -16,20 +16,20 @@ def load(client):
 
     async def show_all_commands(event):
         total_commands = sum(len(commands) for commands in command_list.values())
-        help_text = f"📚 **Daftar Perintah AkiraUBot:**\n"
+        help_text = "📚 **Daftar Perintah AkiraUBot:**\n"
         help_text += f"💡 Total Perintah: {total_commands}\n\n"
         
         for module, commands in sorted(command_list.items()):
             if commands:
                 help_text += f"**{module.capitalize()}**\n"
                 for cmd, desc in commands:
-                    short_desc = desc.split('.')[0]  # Ambil kalimat pertama saja
-                    help_text += f"  • `{cmd}`: {short_desc}\n"
+                    short_desc = desc.split('.')[0]  # Take only the first sentence
+                    help_text += f"  • `{cmd.ljust(15)}`: {short_desc}\n"
                 help_text += "\n"
         
         help_text += "Gunakan `.help <perintah>` untuk informasi lebih detail tentang perintah tertentu."
         
-        # Kirim pesan dalam beberapa bagian jika terlalu panjang
+        # Send message in parts if it's too long
         if len(help_text) > 4096:
             parts = [help_text[i:i+4096] for i in range(0, len(help_text), 4096)]
             for part in parts:
@@ -43,7 +43,7 @@ def load(client):
                 if cmd.split()[0] == command:
                     help_text = f"📌 **Perintah:** `{cmd}`\n"
                     help_text += f"📂 **Modul:** {module.capitalize()}\n"
-                    help_text += f"📝 **Deskripsi:** {desc}"
+                    help_text += f"📝 **Deskripsi:**\n{desc}"
                     await event.reply(help_text)
                     return
         await event.reply(f"❌ Perintah '{command}' tidak ditemukan.")
@@ -55,7 +55,7 @@ def load(client):
         module_list = "📚 **Daftar Modul AkiraUBot:**\n\n"
         for module in modules:
             cmd_count = len(command_list[module])
-            module_list += f"• **{module.capitalize()}** ({cmd_count} perintah)\n"
+            module_list += f"• **{module.capitalize().ljust(15)}** ({cmd_count} perintah)\n"
         module_list += "\nGunakan `.help <nama_modul>` untuk melihat perintah dalam modul tertentu."
         await event.reply(module_list)
 
@@ -66,7 +66,7 @@ def load(client):
         if module_name in command_list:
             help_text = f"📚 **Perintah dalam modul {module_name.capitalize()}:**\n\n"
             for cmd, desc in command_list[module_name]:
-                help_text += f"• `{cmd}`: {desc}\n\n"
+                help_text += f"• `{cmd.ljust(15)}`: {desc}\n\n"
             await event.reply(help_text)
         else:
             await event.reply(f"❌ Modul '{module_name}' tidak ditemukan.")
