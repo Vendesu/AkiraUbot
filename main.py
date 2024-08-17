@@ -93,7 +93,6 @@ async def main():
     else:
         logger.error("No clients could be started. Please check your configuration.")
 
-# These functions will be used by adduser.py
 async def start_new_client(api_id, api_hash, string_session):
     client = await start_client(string_session, api_id, api_hash)
     if client:
