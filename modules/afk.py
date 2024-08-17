@@ -81,11 +81,11 @@ def load(client):
                 if is_afk:
                     await respond_to_afk(event, sender.id, afk_status)
         else:
-            mentioned = await event.get_mentioned()
-            for user in mentioned:
-                is_afk, afk_status = check_afk_status(user.id)
-                if is_afk:
-                    await respond_to_afk(event, user.id, afk_status)
+            if event.mentioned:
+                for user_id in event.get_mentioned_user_ids():
+                    is_afk, afk_status = check_afk_status(user_id)
+                    if is_afk:
+                        await respond_to_afk(event, user_id, afk_status)
 
     async def respond_to_afk(event, user_id, afk_status):
         afk_time = time.time() - afk_status['time']
