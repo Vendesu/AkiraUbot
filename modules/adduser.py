@@ -44,8 +44,14 @@ async def interactive_add_user(event, client):
     
     async def wait_for_input(prompt):
         await client.send_message(chat, prompt)
-        response = await client.wait_for_event(events.NewMessage(chats=chat, from_users=sender))
-        return response.message.text
+        while True:
+            try:
+                response = await client.get_messages(chat, limit=1)
+                if response and response[0].from_id == sender:
+                    return response[0].text
+            except:
+                pass
+            await asyncio.sleep(1)
 
     try:
         await client.send_message(chat, "Proses penambahan akun baru dimulai. Silakan ikuti langkah-langkah berikut:")
