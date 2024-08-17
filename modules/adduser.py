@@ -2,7 +2,10 @@ from telethon import events, TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from telethon.sessions import StringSession
 import asyncio
-from config_manager import add_user_to_config
+
+# Fungsi ini akan diimpor dari main.py saat modul dimuat
+add_user_to_config = None
+start_new_client = None
 
 async def tambah_pengguna(api_id, api_hash, telepon):
     try:
@@ -87,8 +90,7 @@ async def interactive_add_user(event, client):
         add_user_to_config(api_id, api_hash, telepon, string_sesi)
 
         # Mulai client baru untuk user yang baru ditambahkan
-        from main import start_new_client
-        start_new_client(api_id, api_hash, string_sesi)
+        asyncio.create_task(start_new_client(api_id, api_hash, string_sesi))
 
         await client.send_message(chat, "Akun baru berhasil ditambahkan dan diaktifkan!")
     except Exception as e:
@@ -96,6 +98,9 @@ async def interactive_add_user(event, client):
         print(f"Error in interactive_add_user: {e}")
 
 def load(client):
+    global add_user_to_config, start_new_client
+    from main import add_user_to_config, start_new_client
+
     @client.on(events.NewMessage(pattern=r'\.adduser'))
     async def handle_adduser(event):
         sender = await event.get_sender()
