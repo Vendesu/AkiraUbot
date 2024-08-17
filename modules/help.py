@@ -1,94 +1,78 @@
-import re
 from telethon import events, Button
-from telethon.tl.types import InputPeerSelf
 from collections import defaultdict
-import logging
+import math
 
-logger = logging.getLogger(__name__)
-daftar_perintah = defaultdict(list)
+HELP_COMMANDS = {}
 
-def buat_halaman_modul(nomor_halaman, kamus_modul, awalan):
-    modul = sorted(list(kamus_modul.keys()))
-    item_per_halaman = 8
-    indeks_awal = nomor_halaman * item_per_halaman
-    indeks_akhir = (nomor_halaman + 1) * item_per_halaman
-    modul_halaman = modul[indeks_awal:indeks_akhir]
+def paginate_modules(page_n, module_dict, prefix):
+    modules = sorted(list(module_dict.keys()))
+    items_per_page = 8
+    start_index = page_n * items_per_page
+    end_index = (page_n + 1) * items_per_page
+    page_modules = modules[start_index:end_index]
 
-    tombol = []
-    for m in modul_halaman:
-        tombol.append([Button.inline(m.capitalize(), f"bantuan_modul({m})")])
+    buttons = []
+    for module in page_modules:
+        buttons.append([Button.inline(module.capitalize(), f"help_module({module})")])
 
-    if indeks_awal > 0:
-        tombol.append([Button.inline("⬅️ Sebelumnya", f"bantuan_sebelumnya({nomor_halaman - 1})")])
-    if indeks_akhir < len(modul):
-        tombol.append([Button.inline("Selanjutnya ➡️", f"bantuan_selanjutnya({nomor_halaman + 1})")])
+    if start_index > 0:
+        buttons.append([Button.inline("⬅️ Sebelumnya", f"help_prev({page_n - 1})")])
+    if end_index < len(modules):
+        buttons.append([Button.inline("Selanjutnya ➡️", f"help_next({page_n + 1})")])
 
-    return tombol
+    return buttons
 
 def load(client):
-    @client.on(events.NewMessage(pattern=r'\.bantuan(?: (.+))?'))
-    async def perintah_bantuan(event):
-        argumen = event.pattern_match.group(1)
-        if not argumen:
-            pesan = f"<b>✣ Menu Bantuan</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
-            tombol = buat_halaman_modul(0, daftar_perintah, "bantuan")
-            await event.reply(pesan, buttons=tombol)
+    @client.on(events.NewMessage(pattern=r'\.help(?: (.+))?'))
+    async def help_cmd(event):
+        if not event.pattern_match.group(1):
+            message = f"<b>✣ Daftar Modul AkiraUBot:</b>\n\n"
+            message += f"<b>• Jumlah Modul: {len(HELP_COMMANDS)}</b>\n\n"
+            message += "Pilih modul di bawah ini untuk melihat perintah yang tersedia:"
+            buttons = paginate_modules(0, HELP_COMMANDS, "help")
+            await event.reply(message, buttons=buttons)
         else:
-            modul = argumen.lower()
-            if modul in daftar_perintah:
-                awalan = "."  # Anda mungkin ingin mengimplementasikan cara untuk mendapatkan awalan khusus pengguna
-                teks_bantuan = f"Bantuan untuk modul {modul.capitalize()}:\n\n"
-                for cmd, deskripsi in daftar_perintah[modul]:
-                    teks_bantuan += f"`{awalan}{cmd}`: {deskripsi}\n"
-                await event.reply(teks_bantuan)
+            module = event.pattern_match.group(1).lower()
+            if module in HELP_COMMANDS:
+                await event.reply(HELP_COMMANDS[module].__doc__)
             else:
-                await event.reply(f"Modul '{modul}' tidak ditemukan.")
+                await event.reply(f"Modul '{module}' tidak ditemukan.")
 
-    @client.on(events.InlineQuery)
-    async def menu_inline(event):
-        if event.query.user_id == event.client.uid:
-            pesan = f"<b>✣ Menu Inline Bantuan</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
-            tombol = buat_halaman_modul(0, daftar_perintah, "bantuan")
-            await event.answer([
-                event.builder.article(
-                    title="Menu Bantuan!",
-                    text=pesan,
-                    buttons=tombol
-                )
-            ])
-
-    @client.on(events.CallbackQuery(pattern=r"bantuan_modul\((.+?)\)"))
-    async def callback_bantuan_modul(event):
-        modul = event.pattern_match.group(1)
-        if modul in daftar_perintah:
-            awalan = "."  # Anda mungkin ingin mengimplementasikan cara untuk mendapatkan awalan khusus pengguna
-            teks_bantuan = f"Bantuan untuk modul {modul.capitalize()}:\n\n"
-            for cmd, deskripsi in daftar_perintah[modul]:
-                teks_bantuan += f"`{awalan}{cmd}`: {deskripsi}\n"
-            await event.edit(teks_bantuan, buttons=[[Button.inline("Kembali", "bantuan_kembali")]])
-
-    @client.on(events.CallbackQuery(pattern=r"bantuan_(sebelumnya|selanjutnya)\((.+?)\)"))
-    async def callback_halaman_bantuan(event):
-        halaman = int(event.pattern_match.group(2))
-        if event.pattern_match.group(1) == "sebelumnya":
-            halaman -= 1
+    @client.on(events.CallbackQuery(pattern=r"help_module\((.+?)\)"))
+    async def help_module(event):
+        modul = event.data_match.group(1).decode("utf-8")
+        if modul in HELP_COMMANDS:
+            text = f"<b>Perintah untuk modul {modul.capitalize()}:</b>\n\n"
+            text += HELP_COMMANDS[modul].__doc__ or "Tidak ada dokumentasi untuk modul ini."
+            await event.edit(text, buttons=[[Button.inline("🔙 Kembali", "help_back")]])
         else:
-            halaman += 1
-        tombol = buat_halaman_modul(halaman, daftar_perintah, "bantuan")
-        await event.edit(buttons=tombol)
+            await event.answer(f"Modul '{modul}' tidak ditemukan.", alert=True)
 
-    @client.on(events.CallbackQuery(pattern="bantuan_kembali"))
-    async def callback_bantuan_kembali(event):
-        pesan = f"<b>✣ Menu Bantuan</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
-        tombol = buat_halaman_modul(0, daftar_perintah, "bantuan")
-        await event.edit(pesan, buttons=tombol)
+    @client.on(events.CallbackQuery(pattern=r"help_(prev|next)\((\d+)\)"))
+    async def help_pagination(event):
+        direction = event.data_match.group(1).decode("utf-8")
+        page = int(event.data_match.group(2))
+        page = page - 1 if direction == "prev" else page + 1
+        buttons = paginate_modules(page, HELP_COMMANDS, "help")
+        await event.edit(buttons=buttons)
 
-def tambah_perintah_modul(fungsi_tambah_perintah):
-    nama_modul = fungsi_tambah_perintah.__module__.split('.')[-1]
-    fungsi_tambah_perintah(lambda cmd, desc: daftar_perintah[nama_modul].append((cmd, desc)))
-    logger.info(f"Perintah ditambahkan untuk modul {nama_modul}")
+    @client.on(events.CallbackQuery(pattern=r"help_back"))
+    async def help_back(event):
+        message = f"<b>✣ Daftar Modul AkiraUBot:</b>\n\n"
+        message += f"<b>• Jumlah Modul: {len(HELP_COMMANDS)}</b>\n\n"
+        message += "Pilih modul di bawah ini untuk melihat perintah yang tersedia:"
+        buttons = paginate_modules(0, HELP_COMMANDS, "help")
+        await event.edit(message, buttons=buttons)
 
-def tambah_perintah(tambah_perintah):
-    tambah_perintah('.bantuan', '📚 Menampilkan daftar semua perintah')
-    tambah_perintah('.bantuan <modul>', '🔍 Menampilkan bantuan untuk modul tertentu')
-    logger.info("Perintah bantuan ditambahkan")
+def add_module_commands(module):
+    HELP_COMMANDS[module.__name__.split('.')[-1]] = module
+
+def add_command(cmd, description):
+    module = cmd.module
+    if not hasattr(module, '__doc__'):
+        module.__doc__ = ''
+    module.__doc__ += f"\n• <code>{cmd}</code>: {description}"
+
+def add_commands(add_command):
+    add_command('.help', 'Menampilkan daftar semua perintah')
+    add_command('.help <nama_modul>', 'Menampilkan perintah untuk modul tertentu')
