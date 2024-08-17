@@ -1,6 +1,6 @@
 import re
 from telethon import events, Button
-from telethon.tl.types import InputTextMessageContent, InlineQueryResultArticle
+from telethon.tl.types import InputPeerSelf
 from collections import defaultdict
 import logging
 
@@ -30,12 +30,9 @@ def load(client):
     async def perintah_bantuan(event):
         argumen = event.pattern_match.group(1)
         if not argumen:
-            try:
-                hasil = await client.inline_query(client.me.username, "bantuan_pengguna")
-                await event.reply(file=hasil[0])
-            except Exception as error:
-                logger.error(f"Kesalahan dalam perintah_bantuan: {str(error)}")
-                await event.reply(f"Terjadi kesalahan: {str(error)}")
+            pesan = f"<b>✣ Menu Bantuan</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
+            tombol = buat_halaman_modul(0, daftar_perintah, "bantuan")
+            await event.reply(pesan, buttons=tombol)
         else:
             modul = argumen.lower()
             if modul in daftar_perintah:
@@ -47,16 +44,16 @@ def load(client):
             else:
                 await event.reply(f"Modul '{modul}' tidak ditemukan.")
 
-    @client.on(events.InlineQuery())
+    @client.on(events.InlineQuery)
     async def menu_inline(event):
-        if event.query.user_id == client.uid and event.text == "bantuan_pengguna":
-            pesan = f"<b>✣ Menu Inline untuk {event.sender.first_name}</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
+        if event.query.user_id == event.client.uid:
+            pesan = f"<b>✣ Menu Inline Bantuan</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
             tombol = buat_halaman_modul(0, daftar_perintah, "bantuan")
             await event.answer([
-                InlineQueryResultArticle(
+                event.builder.article(
                     title="Menu Bantuan!",
-                    input_message_content=InputTextMessageContent(pesan),
-                    reply_markup=tombol
+                    text=pesan,
+                    buttons=tombol
                 )
             ])
 
@@ -82,7 +79,7 @@ def load(client):
 
     @client.on(events.CallbackQuery(pattern="bantuan_kembali"))
     async def callback_bantuan_kembali(event):
-        pesan = f"<b>✣ Menu Inline untuk {event.sender.first_name}</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
+        pesan = f"<b>✣ Menu Bantuan</b>\n\n<b>★ Total modul: {len(daftar_perintah)}</b>"
         tombol = buat_halaman_modul(0, daftar_perintah, "bantuan")
         await event.edit(pesan, buttons=tombol)
 
